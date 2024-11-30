@@ -31,4 +31,4 @@ jobs:
 
     steps:
     - name: Build
-    run: ./build.sh
+      run: ./build.sh
