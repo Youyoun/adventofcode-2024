@@ -1,4 +1,4 @@
-# Advent of code 2023 solutions <!-- omit in toc -->
+# Advent of code 2024 solutions <!-- omit in toc -->
 
 ⁣    🌟\
     🎄\
@@ -8,16 +8,16 @@
 🎄🎄🎄🎄🎄\
   🎁🎁🎁
 
-These are proposed solutions for the [Advent of Code 2023](http://adventofcode.com/2023).
+These are proposed solutions for the [Advent of Code 2024](http://adventofcode.com/2024).
 
 The solutions are automatically tested with github-actions.
 
 An automatically updated
-[leaderboard](https://cs-advent-of-code-2023.netlify.app/) summarizes the
+[leaderboard](https://cs-advent-of-code-2024.netlify.app/) summarizes the
 execution times of each entry submitted for each problem. It takes a few
 minutes to update once a new submission is merged.
 
-[![Build Status](https://github.com/th-ch/adventofcode-2023/workflows/CI/badge.svg)](https://github.com/th-ch/adventofcode-2023/actions?query=branch%3Amain)
+[![Build Status](https://github.com/th-ch/adventofcode-2024/workflows/CI/badge.svg)](https://github.com/th-ch/adventofcode-2024/actions?query=branch%3Amain)
 
 - [Usage](#usage)
   - [Installation](#installation)
@@ -234,6 +234,7 @@ brew install zig
 
 ## History
 
+- [Advent of Code 2023](https://github.com/th-ch/adventofcode-2023)
 - [Advent of Code 2022](https://github.com/badouralix/adventofcode-2022)
 - [Advent of Code 2021](https://github.com/lypnol/adventofcode-2021)
 - [Advent of Code 2020](https://github.com/david-ds/adventofcode-2020)
