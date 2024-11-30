@@ -1,10 +1,18 @@
-name: Leaderboard
+name: CI
 
 on:  # yamllint disable-line rule:truthy
+  pull_request:
   push:
     branches:
     - main
   workflow_dispatch:
+    inputs:
+      days:
+        description: Run specific days (space delimiter)
+        required: true
+
+env:
+  INPUTS_DAYS: ${{ github.event.inputs.days }}
 
 jobs:
   # Build
@@ -14,7 +22,6 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 2
-
     - name: Setup image
       uses: ./.github/actions/setup
       with:
@@ -23,12 +30,5 @@ jobs:
         clang-version: "16"
         deno-version: "v1.x"
         zig-version: "0.12.0"
-
-    - name: Setup netlify
-      run: npm install -g netlify-cli
-
     - name: Build
-      run: ./leaderboard.sh
-      continue-on-error: true
-      env:
-        NETLIFY_AUTH: ${{ secrets.NETLIFY_AUTH }}
+      run: ./build.sh
