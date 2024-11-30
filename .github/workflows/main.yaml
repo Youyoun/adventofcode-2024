@@ -41,14 +41,14 @@ jobs:
     - uses: denoland/setup-deno@v1
       with:
         deno-version: v1.x
-    # - uses: jiro4989/setup-nim-action@v1
+    # - uses: jiro4989/setup-nim-action@v2
     #   with:
     #     nim-version: 1.4.8
     - uses: mlugg/setup-zig@v1
       with:
         version: 0.12.0-dev.1768+39a966b0a
 
-    - uses: jiro4989/setup-nim-action@v1
+    - uses: jiro4989/setup-nim-action@v2
       with:
         nim-version: '2.0.0'
 
