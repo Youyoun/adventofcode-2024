@@ -10,11 +10,11 @@ jobs:
   build:
     uses: ./.github/workflows/setup.yml
     with:
-      - python-version: "3.10"
-      - nim-version: "2.0.0"
-      - clang-version: "16"
-      - deno-version: "v1.x"
-      - zig-version: "0.12.0"
+    - python-version: "3.10"
+    - nim-version: "2.0.0"
+    - clang-version: "16"
+    - deno-version: "v1.x"
+    - zig-version: "0.12.0"
 
     # Build
     build-steps:
@@ -22,11 +22,11 @@ jobs:
       needs: build
 
       steps:
-        - name: Setup netlify
-          run: npm install -g netlify-cli
+      - name: Setup netlify
+        run: npm install -g netlify-cli
 
-        - name: Build
-          run: ./leaderboard.sh
-          continue-on-error: true
-          env:
-            NETLIFY_AUTH: ${{ secrets.NETLIFY_AUTH }}
+      - name: Build
+        run: ./leaderboard.sh
+        continue-on-error: true
+        env:
+          NETLIFY_AUTH: ${{ secrets.NETLIFY_AUTH }}
