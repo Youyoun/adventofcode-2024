@@ -44,7 +44,7 @@ jobs:
     # - uses: jiro4989/setup-nim-action@v1
     #   with:
     #     nim-version: 1.4.8
-    - uses: goto-bus-stop/setup-zig@v2
+    - uses: mlugg/setup-zig@v1
       with:
         version: 0.12.0-dev.1768+39a966b0a
 
