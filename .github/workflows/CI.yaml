@@ -15,20 +15,17 @@ env:
   INPUTS_DAYS: ${{ github.event.inputs.days }}
 
 jobs:
-  setup:
-    uses: ./.github/workflows/setup.yml
-    with:
-      python-version: "3.10"
-      nim-version: "2.0.0"
-      clang-version: "16"
-      deno-version: "v1.x"
-      zig-version: "0.12.0"
-
   # Build
   build:
     runs-on: ubuntu-22.04
-    needs: setup
-
     steps:
+    - name: Setup image
+      uses: ./.github/workflows/setup.yml
+      with:
+        python-version: "3.10"
+        nim-version: "2.0.0"
+        clang-version: "16"
+        deno-version: "v1.x"
+        zig-version: "0.12.0"
     - name: Build
       run: ./build.sh
