@@ -30,6 +30,7 @@ runs:
   steps:
   - name: Fix remote refs
     run: git fetch --no-tags --depth=2 origin main
+    shell: bash
 
   # Install missing language compilers and interpreters
   # The default image natively supports bash, c/c++, dotnet, go, java, julia, python, ruby, rust
@@ -42,6 +43,7 @@ runs:
 
   - name: deps-python
     run: pip install --user -r requirements.txt
+    shell: bash
 
   - uses: denoland/setup-deno@v2
     with:
@@ -60,3 +62,4 @@ runs:
       wget https://apt.llvm.org/llvm.sh
       chmod +x ./llvm.sh
       sudo ./llvm.sh ${{ inputs.clang-version }}
+    shell: bash
