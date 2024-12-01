@@ -11,14 +11,11 @@ import (
 
 func run(s string) interface{} {
 	// Your code goes here
-	// Your code goes here
 	leftSlice := []int{}
 	rightSlice := []int{}
-	//fmt.Println("Start")
 	lines := strings.Split(s, "\n")
 	for _, line := range lines {
 		items := strings.Split(line, "   ")
-		//fmt.Printf("items: #%s# / #%s#\n", items[0], items[1])
 		leftInt, _ := strconv.Atoi(items[0])
 		leftSlice = append(leftSlice, leftInt)
 		rightInt, _ := strconv.Atoi(items[1])
@@ -34,7 +31,6 @@ func run(s string) interface{} {
 		count := rightFreqs[left]
 		totalScore += left * count
 	}
-	fmt.Println("Before return")
 	return totalScore
 }
 
