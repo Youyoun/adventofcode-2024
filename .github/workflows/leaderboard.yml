@@ -22,7 +22,7 @@ jobs:
         nim-version: "2.0.0"
         clang-version: "16"
         deno-version: "v1.x"
-        zig-version: "0.12.0"
+        zig-version: "0.13.0"
 
     - name: Setup netlify
       run: npm install -g netlify-cli
