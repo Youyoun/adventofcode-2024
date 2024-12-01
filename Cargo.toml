@@ -8,3 +8,11 @@ edition = "2021"
 [lib]
 name = "aoc"
 path = "./lib/rust/lib.rs"
+
+[[bin]]
+name = "day-01-part-1-enizor"
+path = "./day-01/part-1/enizor.rs"
+
+[[bin]]
+name = "day-01-part-2-enizor"
+path = "./day-01/part-2/enizor.rs"
