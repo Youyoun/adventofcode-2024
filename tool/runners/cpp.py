@@ -13,11 +13,10 @@ class SubmissionCpp(SubmissionWrapper):
         tmp.close()
         compile_output = subprocess.check_output(
             [
-                "clang-16",
+                "clang++",
                 "-Wall",
                 "-Wextra",
                 "-O3",
-                "-lstdc++",
                 "-lm",
                 "-std=c++20",
                 "-o",
