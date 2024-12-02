@@ -7,6 +7,9 @@ import re
 import sys
 from typing import NamedTuple
 
+# 3p
+from aocd import get_data
+
 # project
 import tool.discovery as discovery
 from tool.config import CONFIG
@@ -95,7 +98,7 @@ def create_submission(author: str, path: str, language: str) -> None:
             print(f"[+] created symlink in {workspace_submission_file}")
 
 
-def create_input(author: str, path: str) -> None:
+def create_input(author: str, path: str, day: int) -> None:
     # Build input file name
     input_file = os.path.join(path, f"{author}.txt")
 
@@ -107,6 +110,11 @@ def create_input(author: str, path: str) -> None:
 
     # Log success
     print(f"[+] created {input_file}")
+
+    data = get_data(day=day)
+    with open(input_file, "a") as f:
+        f.write(data)
+    print(f"[+] downloaded input in {input_file}")
 
 
 def create(day: int | None, part: int, author: str | None, language: str) -> None:
@@ -138,7 +146,7 @@ aoc config <username> <language>""",
 
     # Create input file
     try:
-        create_input(author, dirs.input)
+        create_input(author, dirs.input, day)
     except FileNotEmptyException:
         pass
     except Exception as e:
