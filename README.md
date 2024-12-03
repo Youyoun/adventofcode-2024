@@ -152,7 +152,7 @@ optional arguments:
                         submission author
   -d DAY, --day DAY     problem day
   -p PART, --part PART  problem part
-  -l {c,cpp,go,intcode,java,js,ts,ml,nim,php,py,pyx,rb,rs,sh,v,zig}, --language {c,cpp,go,intcode,java,js,ts,ml,nim,php,py,pyx,rb,rs,sh,v,zig}
+  -l {c,cpp,go,intcode,java,js,ts,ml,nim,php,py,pyx,rb,rs,sh,v,zig}, --language {c,cpp,go,intcode,java,js,ts,porffor.js,porffor.ts,ml,nim,php,py,pyx,rb,rs,sh,v,zig}
                         submission language
 ```
 
