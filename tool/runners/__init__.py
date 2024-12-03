@@ -7,6 +7,7 @@ from tool.runners.cpp import SubmissionCpp
 from tool.runners.cs import SubmissionCs
 from tool.runners.cython_aoc import SubmissionPyx
 from tool.runners.deno import SubmissionDeno
+from tool.runners.porffor import SubmissionPorffor
 from tool.runners.go import SubmissionGo
 from tool.runners.intcode import SubmissionIntcode
 from tool.runners.java import SubmissionJava
@@ -31,6 +32,8 @@ TOOL_BY_LANGUAGE = {
     "java": "java",
     "js": "deno",
     "ts": "deno",
+    "porffor.js": "npx",
+    "porffor.ts": "npx",
     "nim": "nim",
     "ml": "dune",
     "php": "php",
@@ -73,6 +76,8 @@ def load_submission_runnable(
         return SubmissionJava(path)
     elif language == "js" or language == "ts":
         return SubmissionDeno(path)
+    elif language == "porffor.js" or language == "porffor.ts":
+        return SubmissionPorffor(path)
     elif language == "php":
         return SubmissionPHP(path)
     elif language == "rb":
