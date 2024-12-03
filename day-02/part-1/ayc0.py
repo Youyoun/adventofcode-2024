@@ -1,5 +1,25 @@
 from tool.runners.python import SubmissionPy
 
+def is_safe(numbers):
+    is_going_up = numbers[0] < numbers[1]
+
+    prev_number = numbers[0]
+    for number in numbers[1:]:
+        if is_going_up and prev_number >= number:
+            return False
+
+        if not is_going_up and prev_number <= number:
+            return False
+
+        distance = abs(prev_number - number)
+        if distance > 3 or distance == 0:
+            return False
+
+        prev_number = number
+
+    return True
+
+
 
 class Ayc0Submission(SubmissionPy):
     def run(self, s: str):
@@ -11,29 +31,12 @@ class Ayc0Submission(SubmissionPy):
         for line in s.splitlines():
             if not line:
                 continue
+
             numbers = [int(n) for n in line.split()]
-            is_going_up = numbers[0] < numbers[1]
 
-            prev_number = numbers[0]
-            safe = True
-            for number in numbers[1:]:
-                if is_going_up and prev_number >= number:
-                    safe = False
-                    break
-
-                if not is_going_up and prev_number <= number:
-                    safe = False
-                    break
-
-                distance = abs(prev_number - number)
-                if distance > 3 or distance == 0:
-                    safe = False
-                    break
-
-                prev_number = number
-
-            if safe:
+            if (is_safe(numbers)):
                 safes += 1
+
         return safes
 
 def test_ayc0():
