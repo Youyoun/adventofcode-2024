@@ -12,9 +12,6 @@ fn Iterator(comptime T: type) type {
 
         fn next(self: *Self) ?T {
             const return_val = if (self.index < self.buffer.len) self.buffer[self.index] else null;
-            if (self.index < self.buffer.len) {
-                std.debug.print("{s}", .{self.buffer[self.index .. self.index + 1]});
-            }
             self.index += 1;
             return return_val;
         }
@@ -39,12 +36,9 @@ fn parse_mul(iterator: *Iterator(u8)) ?i64 {
     if ((iterator.next() orelse return null) != "l"[0]) return null;
     if ((iterator.next() orelse return null) != "("[0]) return null;
     const n1 = parse_number(iterator) orelse return null;
-    std.debug.print("n1 = {}\n", .{n1});
     if ((iterator.next() orelse return null) != ","[0]) return null;
     const n2 = parse_number(iterator) orelse return null;
-    std.debug.print("n2 = {}\n", .{n2});
     if ((iterator.peek() orelse return null) != ")"[0]) return null;
-    std.debug.print("n1 * n2 = {}\n", .{n1 * n2});
     return n1 * n2;
 }
 

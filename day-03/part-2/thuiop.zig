@@ -3,10 +3,81 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
+fn Iterator(comptime T: type) type {
+    return struct {
+        buffer: []const T,
+        index: usize,
+
+        const Self = @This();
+
+        fn next(self: *Self) ?T {
+            const return_val = if (self.index < self.buffer.len) self.buffer[self.index] else null;
+            self.index += 1;
+            return return_val;
+        }
+
+        fn peek(self: *Self) ?T {
+            return if (self.index < self.buffer.len) self.buffer[self.index] else null;
+        }
+    };
+}
+
+fn parse_number(iterator: *Iterator(u8)) ?i64 {
+    const begin_index = iterator.index;
+    while (std.ascii.isDigit(iterator.peek().?)) {
+        _ = iterator.next();
+    }
+    return std.fmt.parseInt(i64, iterator.buffer[begin_index..iterator.index], 10) catch unreachable;
+}
+
+fn parse_mul(iterator: *Iterator(u8)) ?i64 {
+    if ((iterator.next() orelse return null) != "m"[0]) return null;
+    if ((iterator.next() orelse return null) != "u"[0]) return null;
+    if ((iterator.next() orelse return null) != "l"[0]) return null;
+    if ((iterator.next() orelse return null) != "("[0]) return null;
+    const n1 = parse_number(iterator) orelse return null;
+    if ((iterator.next() orelse return null) != ","[0]) return null;
+    const n2 = parse_number(iterator) orelse return null;
+    if ((iterator.peek() orelse return null) != ")"[0]) return null;
+    return n1 * n2;
+}
+
+fn parse_do(iterator: *Iterator(u8)) ?bool {
+    if ((iterator.next() orelse return null) != "d"[0]) return null;
+    if ((iterator.next() orelse return null) != "o"[0]) return null;
+    const next = iterator.next() orelse return null;
+    if (next == "("[0]) {
+        if ((iterator.next() orelse return null) != ")"[0]) return null;
+        return true;
+    } else if (next == "n"[0]) {
+        if ((iterator.next() orelse return null) != "'"[0]) return null;
+        if ((iterator.next() orelse return null) != "t"[0]) return null;
+        if ((iterator.next() orelse return null) != "("[0]) return null;
+        if ((iterator.next() orelse return null) != ")"[0]) return null;
+        return false;
+    } else {
+        return null;
+    }
+}
+
 fn run(input: [:0]const u8) i64 {
-    _ = input;
-    // your code here
-    return 0;
+    //std.debug.print("{s}", .{input});
+    var iterator: Iterator(u8) = .{ .buffer = input, .index = 0 };
+    var sum: i64 = 0;
+    var doing: bool = true;
+    while (iterator.peek()) |c| {
+        if (c == "m"[0]) {
+            const new_val = parse_mul(&iterator) orelse 0;
+            if (doing) {
+                sum += new_val;
+            }
+        } else if (c == "d"[0]) {
+            doing = parse_do(&iterator) orelse continue;
+        } else {
+            _ = iterator.next();
+        }
+    }
+    return sum;
 }
 
 pub fn main() !void {
