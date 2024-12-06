@@ -13,21 +13,21 @@ fn main() {
 
 fn test_loop(grid: StrGrid<'_>, new_box: Position, mut pos: Position) -> bool {
     let mut dir = Up;
-    let mut passsages = [
-        VecBitSet::new(grid.width * grid.height),
-        VecBitSet::new(grid.width * grid.height),
-        VecBitSet::new(grid.width * grid.height),
-        VecBitSet::new(grid.width * grid.height),
+    let mut passages = [
+        VecBitSet::new(bitset_size(grid.width * grid.height)),
+        VecBitSet::new(bitset_size(grid.width * grid.height)),
+        VecBitSet::new(bitset_size(grid.width * grid.height)),
+        VecBitSet::new(bitset_size(grid.width * grid.height)),
     ];
     while let Some(pos2) = grid.step(pos, dir) {
         if pos2 == new_box || grid[pos2] == b'#' {
             dir.turn_indirect();
         } else {
-            if passsages[dir as usize].test(grid.cur(pos2)) {
+            if passages[dir as usize].test(grid.cur(pos2)) {
                 return true;
             }
             pos = pos2;
-            passsages[dir as usize].set(grid.cur(pos));
+            passages[dir as usize].set(grid.cur(pos));
         }
     }
     false
@@ -42,7 +42,7 @@ fn run(input: &str) -> u32 {
         .expect("failed to find starting position!");
     let start = grid.from_cur(cur);
     let mut pos = start;
-    let mut passsage = VecBitSet::new(grid.width * grid.height);
+    let mut passsage = VecBitSet::new(bitset_size(grid.width * grid.height));
     passsage.set(cur);
     let mut dir = Up;
     let mut res = 0;
