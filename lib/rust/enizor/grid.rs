@@ -3,11 +3,30 @@ use std::ops::Index;
 #[repr(u8)]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Direction {
-    Left = 0b1,
+    Left = 0,
     #[default]
-    Right = 0b10,
-    Up = 0b100,
-    Down = 0b1000,
+    Right = 1,
+    Up = 2,
+    Down = 3,
+}
+
+impl Direction {
+    pub fn turn_indirect(&mut self) {
+        *self = match self {
+            Right => Down,
+            Down => Left,
+            Left => Up,
+            Up => Right,
+        }
+    }
+    pub fn turn_direct(&mut self) {
+        *self = match self {
+            Right => Up,
+            Down => Right,
+            Left => Down,
+            Up => Left,
+        }
+    }
 }
 
 use Direction::*;
@@ -63,7 +82,7 @@ impl<'a> StrGrid<'a> {
     pub fn step(&self, pos: Position, dir: Direction) -> Option<Position> {
         let mut pos2 = pos;
         if self.step_mut(&mut pos2, dir) {
-            Some(pos)
+            Some(pos2)
         } else {
             None
         }
