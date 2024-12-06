@@ -63,7 +63,7 @@ impl<'a> StrGrid<'a> {
     pub fn step(&self, pos: Position, dir: Direction) -> Option<Position> {
         let mut pos2 = pos;
         if self.step_mut(&mut pos2, dir) {
-            Some(pos)
+            Some(pos2)
         } else {
             None
         }
