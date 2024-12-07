@@ -12,18 +12,23 @@ class ThChSubmission(SubmissionPy):
             result, remaining = equation.split(":")
             result = int(result)
             numbers = list(map(int, remaining.split()))
-            def reduce(numbers, target, acc):
-                if not numbers:
-                    return [acc == target]
-                outcomes = []
-                for potential_acc in [acc + numbers[0], acc * numbers[0]]:
-                    if potential_acc > target:
-                        outcomes.append(False)
-                        continue
-                    outcomes.extend(reduce(numbers[1:], target, potential_acc))
-                return outcomes
 
-            if any(reduce(numbers[1:], result, numbers[0])):
+            def reduce(numbers, target):
+                if len(numbers) == 1:
+                    return target == numbers[0]
+
+                # add
+                if target - numbers[-1] >= 0:
+                    if reduce(numbers[:-1], target - numbers[-1]):
+                        return True
+                # multiply
+                if target % numbers[-1] == 0:
+                    if reduce(numbers[:-1], target // numbers[-1]):
+                        return True
+
+                return False
+
+            if reduce(numbers, result):
                 total += result
 
         return total
