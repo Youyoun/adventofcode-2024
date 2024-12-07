@@ -4,21 +4,19 @@
  */
 const run = (s: string): unknown => {
   // Your code goes here
-  const [rawRules, inputs] = s.split("\n\n");
-  if (!rawRules || !inputs) return 0;
+  const [rawRules, rawInputs] = s.split("\n\n");
+  if (!rawRules || !rawInputs) return 0;
 
-  const potentialValues = new Set<number>();
   const rules: Array<[number, number]> = rawRules
     .trim()
     .split("\n")
     .map((rule) => {
-      const min = parseInt(rule.substring(0, 2), 10);
-      const max = parseInt(rule.substring(3, 5), 10);
-      potentialValues.add(min).add(max);
-      return [min, max];
+      return [
+        parseInt(rule.substring(0, 2), 10),
+        parseInt(rule.substring(3, 5), 10),
+      ];
     });
 
-  const values = Array.from(potentialValues);
   const sortFollowingRules = (a: number, b: number) => {
     for (const rule of rules) {
       if (rule[0] === a && rule[1] === b) return -1;
@@ -26,20 +24,20 @@ const run = (s: string): unknown => {
     }
     return 0;
   };
-  values.sort(sortFollowingRules);
 
   let sum = 0;
-  for (const input of inputs.split("\n")) {
-    if (!input) continue;
+  for (const rawInput of rawInputs.split("\n")) {
+    if (!rawInput) continue;
 
-    const values = input.split(",").map((v) => parseInt(v, 10));
-    const sortedValues = values.toSorted(sortFollowingRules);
+    const input = rawInput.split(",").map((v) => parseInt(v, 10));
 
-    if (sortedValues.every((v, i) => v === values[i])) {
+    const sortedInput = input.toSorted(sortFollowingRules);
+
+    if (sortedInput.every((v, i) => v === input[i])) {
       continue;
     }
 
-    const middleValue = sortedValues[Math.floor(values.length / 2)];
+    const middleValue = sortedInput[Math.floor(input.length / 2)];
     sum += middleValue;
   }
 
