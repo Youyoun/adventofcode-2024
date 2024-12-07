@@ -26,7 +26,7 @@ const Position = struct {
     }
 
     fn is_not_out(pos: Position, length: usize) bool {
-        return pos.i != 0 and pos.i != length - 1 and pos.j != 0 and pos.j != length - 1;
+        return pos.i != 0 and pos.i != length - 2 and pos.j != 0 and pos.j != length - 2;
     }
 
     fn get_val(pos: Position, comptime T: type, array: []T, row_length: usize) T {
