@@ -1,5 +1,8 @@
 use aoc::enizor::bitset::*;
-use aoc::enizor::grid::{Direction::*, Position, StrGrid};
+use aoc::enizor::grid::{
+    Direction::{self, *},
+    Position, StrGrid,
+};
 use std::env::args;
 use std::time::Instant;
 
@@ -11,8 +14,7 @@ fn main() {
     println!("{}", output);
 }
 
-fn test_loop(grid: StrGrid<'_>, new_box: Position, mut pos: Position) -> bool {
-    let mut dir = Up;
+fn test_loop(grid: StrGrid<'_>, new_box: Position, mut pos: Position, mut dir: Direction) -> bool {
     let mut passages = [
         VecBitSet::new(bitset_size(grid.width * grid.height)),
         VecBitSet::new(bitset_size(grid.width * grid.height)),
@@ -50,7 +52,7 @@ fn run(input: &str) -> u32 {
         if grid[pos2] == b'#' {
             dir.turn_indirect();
         } else {
-            if !passsage.test(grid.cur(pos2)) && test_loop(grid, pos2, start) {
+            if !passsage.test(grid.cur(pos2)) && test_loop(grid, pos2, pos, dir) {
                 res += 1;
             }
             pos = pos2;
