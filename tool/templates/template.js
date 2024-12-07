@@ -6,8 +6,10 @@ const run = (s) => {
   // Your code goes here
 };
 
-const start = performance.now();
-const answer = run(Deno.args[0]);
+if (Deno.args[0]) {
+  const start = performance.now();
+  const answer = run(Deno.args[0]);
 
-console.log(`_duration:${performance.now() - start}`);
-console.log(answer);
+  console.log(`_duration:${performance.now() - start}`);
+  console.log(answer);
+}

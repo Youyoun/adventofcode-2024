@@ -9,8 +9,10 @@ const run = (s: string): unknown => {
 
 console.assert(run(`example`) === "solution");
 
-const start = performance.now();
-const answer = run(Deno.args[0]);
+if (Deno.args[0]) {
+  const start = performance.now();
+  const answer = run(Deno.args[0]);
 
-console.log(`_duration:${performance.now() - start}`);
-console.log(answer);
+  console.log(`_duration:${performance.now() - start}`);
+  console.log(answer);
+}
