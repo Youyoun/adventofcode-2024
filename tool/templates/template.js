@@ -6,6 +6,8 @@ const run = (s) => {
   // Your code goes here
 };
 
+console.assert(run(`example`) === "solution");
+
 if (Deno.args[0]) {
   const start = performance.now();
   const answer = run(Deno.args[0]);
