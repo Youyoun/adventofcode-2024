@@ -102,6 +102,9 @@ impl<'a> StrGrid<'a> {
         }
         true
     }
+    pub fn valid_pos(&self, pos: Position) -> bool {
+        pos.x < self.width - 1 && pos.y < self.height
+    }
 }
 
 impl<'a> Index<Position> for StrGrid<'a> {
