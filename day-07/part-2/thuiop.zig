@@ -14,6 +14,8 @@ fn concat(x: i64, y: i64) i64 {
 fn combine_recursive(number_list: []i64, total: i64, target: i64) bool {
     if (number_list.len == 0) {
         return total == target;
+    } else if (total > target) {
+        return false;
     } else {
         return combine_recursive(number_list[1..], total + number_list[0], target) or combine_recursive(number_list[1..], total * number_list[0], target) or combine_recursive(number_list[1..], concat(total, number_list[0]), target);
     }
