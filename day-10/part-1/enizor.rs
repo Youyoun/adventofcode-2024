@@ -1,6 +1,8 @@
 use std::env::args;
 use std::time::Instant;
+use std::usize;
 
+use aoc::enizor::bitset::{bitset_size, ArrayBitSet};
 use aoc::enizor::grid::*;
 
 fn main() {
@@ -11,21 +13,25 @@ fn main() {
     println!("{}", output);
 }
 
-fn trailhead_score(grid: &StrGrid<'_>, pos: Position) -> usize {
-    let height = grid[pos];
+fn trailhead_score(grid: &StrGrid<'_>, start: Position) -> usize {
+    let height = grid[start];
     assert_eq!(height, b'0');
-    let mut stack = vec![(pos, height)];
-    let mut visited = vec![pos];
+    let mut stack = Vec::new();
+    stack.push((start, height));
     let mut res = 0;
+    let mut visits = ArrayBitSet::<{ bitset_size(19 * 19) }>::new();
     while let Some((pos, height)) = stack.pop() {
-        for d in ALL_DIRECTIONS {
-            if let Some(pos2) = grid.step(pos, d) {
-                if grid[pos2] == height + 1 && !visited.contains(&pos2) {
-                    visited.push(pos2);
-                    if height == b'8' {
-                        res += 1;
-                    } else {
-                        stack.push((pos2, height + 1));
+        for dir in ALL_DIRECTIONS {
+            if let Some(pos2) = grid.step(pos, dir) {
+                if grid[pos2] == height + 1 {
+                    let reduced_pos = 9 + start.x - pos2.x + 19 * (9 + start.y - pos2.y);
+                    if !visits.test(reduced_pos) {
+                        visits.set(reduced_pos);
+                        if height == b'8' {
+                            res += 1;
+                        } else {
+                            stack.push((pos2, height + 1));
+                        }
                     }
                 }
             }
@@ -36,10 +42,12 @@ fn trailhead_score(grid: &StrGrid<'_>, pos: Position) -> usize {
 
 fn run(input: &str) -> usize {
     let grid = StrGrid::from_input(input);
+    let mut scores = Vec::with_capacity(input.len());
+    scores.resize_with(input.len(), || (0, 0));
     let mut res = 0;
     for (cur, b) in input.as_bytes().iter().enumerate() {
         if *b == b'0' {
-            res += trailhead_score(&grid, grid.from_cur(cur))
+            res += trailhead_score(&grid, grid.from_cur(cur));
         }
     }
     res
