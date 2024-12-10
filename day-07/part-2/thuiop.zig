@@ -4,11 +4,11 @@ var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
 fn concat(x: i64, y: i64) i64 {
-    var pow: i64 = 0;
-    while (std.math.pow(i64, 10, pow) <= y) {
-        pow += 1;
+    var pow: i64 = 10;
+    while (pow <= y) {
+        pow *= 10;
     }
-    return x * std.math.pow(i64, 10, pow) + y;
+    return x * pow + y;
 }
 
 fn combine_recursive(number_list: []i64, total: i64, target: i64) bool {
