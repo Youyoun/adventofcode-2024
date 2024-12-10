@@ -17,7 +17,16 @@ fn combine_recursive(number_list: []i64, total: i64, target: i64) bool {
     } else if (total > target) {
         return false;
     } else {
-        return combine_recursive(number_list[1..], total + number_list[0], target) or combine_recursive(number_list[1..], total * number_list[0], target) or combine_recursive(number_list[1..], concat(total, number_list[0]), target);
+        if (combine_recursive(number_list[1..], total + number_list[0], target)) {
+            return true;
+        }
+        if (combine_recursive(number_list[1..], total * number_list[0], target)) {
+            return true;
+        }
+        if (combine_recursive(number_list[1..], concat(total, number_list[0]), target)) {
+            return true;
+        }
+        return false;
     }
 }
 
@@ -35,7 +44,7 @@ fn run(input: [:0]const u8) i64 {
             number_list.append(std.fmt.parseInt(i64, num, 10) catch unreachable) catch unreachable;
             length += 1;
         }
-        if (combine_recursive(number_list.items, 0, result)) {
+        if (combine_recursive(number_list.items[1..], number_list.items[0], result)) {
             calibration_result += result;
         }
     }
