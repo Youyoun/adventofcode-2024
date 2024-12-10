@@ -3,20 +3,11 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
-fn combine_recursive(number_list: []i64, i: usize, j: usize, store_array: *[]i64) i64 {
-    if (j == 0) {
-        return number_list[0];
+fn combine_recursive(number_list: []i64, total: i64, target: i64) bool {
+    if (number_list.len == 0) {
+        return total == target;
     } else {
-        const remainder: i64 = combine_recursive(number_list, i / 2, j - 1, store_array);
-        var result: i64 = 0;
-        if (i % 2 == 0) {
-            result = number_list[j] + remainder;
-        } else {
-            result = number_list[j] * remainder;
-        }
-        //std.debug.print("rec {} {} {} {}\n", .{ i, j, result, i + j * (number_list.len - 1) });
-        store_array.*[i + (j - 1) * (number_list.len - 1)] = result;
-        return result;
+        return combine_recursive(number_list[1..], total + number_list[0], target) or combine_recursive(number_list[1..], total * number_list[0], target);
     }
 }
 
@@ -34,19 +25,9 @@ fn run(input: [:0]const u8) i64 {
             number_list.append(std.fmt.parseInt(i64, num, 10) catch unreachable) catch unreachable;
             length += 1;
         }
-        var store_array = allocator.alloc(i64, std.math.pow(u16, 2, length - 1) * (length - 1)) catch unreachable;
-        @memset(store_array, 0);
-        for (0..std.math.pow(u16, 2, length - 1)) |i| {
-            const temp_result: i64 = combine_recursive(number_list.items, i, length - 1, &store_array);
-            // std.debug.print("{} {}\n", .{ i, temp_result });
-
-            if (temp_result == result) {
-                calibration_result += result;
-                break;
-            }
+        if (combine_recursive(number_list.items, 0, result)) {
+            calibration_result += result;
         }
-        //std.debug.print("{s}\n", .{line});
-        //std.debug.print("{any}\n", .{store_array});
     }
     return calibration_result;
 }
