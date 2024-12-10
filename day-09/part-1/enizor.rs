@@ -35,7 +35,7 @@ fn run(input: &str) -> usize {
         } else {
             let mut empty_space = (bytes[fwd_cur] - b'0') as usize;
             while empty_space > 0 {
-                while end_countdown == 0 && end_cur > fwd_cur + 2 {
+                while end_countdown == 0 && end_cur > fwd_cur {
                     end_cur -= 2;
                     end_countdown = (bytes[end_cur] - b'0') as usize;
                 }
