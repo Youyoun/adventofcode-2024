@@ -128,18 +128,15 @@ fn test_loop(
     blocs_x: &[&[usize]],
     blocs_y: &[&[usize]],
 ) -> bool {
-    let mut passages = [
-        VecBitSet::new(bitset_size(grid.width * grid.height)),
-        VecBitSet::new(bitset_size(grid.width * grid.height)),
-        VecBitSet::new(bitset_size(grid.width * grid.height)),
-        VecBitSet::new(bitset_size(grid.width * grid.height)),
-    ];
+    let mut passages = VecBitSet::new(bitset_size(grid.width * grid.height));
     while let Some(pos2) = next_block(new_box, pos, dir, blocs_x, blocs_y) {
-        if passages[dir as usize].test(grid.cur(pos2)) {
-            return true;
+        if dir == Up  {
+            if passages.test(grid.cur(pos2)) {
+                return true;
+            } else {
+                passages.set(grid.cur(pos2));
+            }
         }
-        pos = pos2;
-        passages[dir as usize].set(grid.cur(pos));
         dir.turn_indirect();
         pos = pos2;
     }
