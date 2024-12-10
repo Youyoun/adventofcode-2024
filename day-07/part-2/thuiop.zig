@@ -17,10 +17,10 @@ fn combine_recursive(number_list: []i64, total: i64, target: i64) bool {
     } else if (total > target) {
         return false;
     } else {
-        if (combine_recursive(number_list[1..], total + number_list[0], target)) {
+        if (combine_recursive(number_list[1..], total * number_list[0], target)) {
             return true;
         }
-        if (combine_recursive(number_list[1..], total * number_list[0], target)) {
+        if (combine_recursive(number_list[1..], total + number_list[0], target)) {
             return true;
         }
         if (combine_recursive(number_list[1..], concat(total, number_list[0]), target)) {
