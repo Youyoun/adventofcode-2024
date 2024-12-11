@@ -47,7 +47,7 @@ pub struct StrGrid<'a> {
 }
 
 impl<'a> StrGrid<'a> {
-    pub fn from_input(input_str: &'a str) -> StrGrid {
+    pub fn from_input(input_str: &'a str) -> Self {
         let bytes = input_str.as_bytes();
         let w = bytes
             .iter()
@@ -107,7 +107,7 @@ impl<'a> StrGrid<'a> {
     }
 }
 
-impl<'a> Index<Position> for StrGrid<'a> {
+impl Index<Position> for StrGrid<'_> {
     type Output = u8;
 
     #[inline(always)]
@@ -117,7 +117,7 @@ impl<'a> Index<Position> for StrGrid<'a> {
 }
 
 use std::fmt;
-impl<'a> fmt::Debug for StrGrid<'a> {
+impl fmt::Debug for StrGrid<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
