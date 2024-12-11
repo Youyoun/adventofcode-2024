@@ -1,6 +1,5 @@
 use std::env::args;
 use std::time::Instant;
-use std::usize;
 
 use aoc::enizor::bitset::{bitset_size, ArrayBitSet};
 use aoc::enizor::grid::*;
