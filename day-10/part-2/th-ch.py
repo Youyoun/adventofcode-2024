@@ -24,14 +24,14 @@ class ThChSubmission(SubmissionPy):
                     ):
                         G[(x, y)][1].append((x + dx, y + dy))
 
-        def hike(x, y, count):
+        def hike(x, y):
             height, neighbors = G[(x, y)]
             if height == 9:
-                return count
+                return 1
 
-            return sum(hike(xx, yy, count) for xx, yy in neighbors)
+            return sum(hike(xx, yy) for xx, yy in neighbors)
 
-        return sum(hike(x, y, 1) for x, y in trailheads)
+        return sum(hike(x, y) for x, y in trailheads)
 
 
 def test_th_ch():
