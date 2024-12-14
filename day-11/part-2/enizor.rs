@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::env::args;
 use std::time::Instant;
 
+use aoc::enizor::parser::Parser;
+
 fn main() {
     let now = Instant::now();
     let output = run(&args().nth(1).expect("Please provide an input"));
@@ -11,26 +13,12 @@ fn main() {
 }
 
 fn parse(input: &[u8], map: &mut HashMap<usize, usize>) -> usize {
-    let mut v = None;
     let mut count = 0;
-    for b in input {
-        match b {
-            b' ' | b'\n' => {
-                count += 1;
-                *map.entry(v.expect("unexpected whitespace!")).or_default() += 1;
-                v = None
-            }
-            _ => {
-                assert!(b.is_ascii_digit());
-                let v_ref = v.get_or_insert(0);
-                *v_ref *= 10;
-                *v_ref += (b - b'0') as usize;
-            }
-        }
-    }
-    if let Some(val) = v {
+    let mut parser = Parser::from_input(&input);
+    while let Some(v) = parser.parse_usize() {
+        *map.entry(v).or_default() += 1;
         count += 1;
-        *map.entry(val).or_default() += 1;
+        parser.skip_whitespace();
     }
     count
 }

@@ -1,6 +1,8 @@
 use std::env::args;
 use std::time::Instant;
 
+use aoc::enizor::parser::Parser;
+
 fn main() {
     let now = Instant::now();
     let output = run(&args().nth(1).expect("Please provide an input"));
@@ -20,83 +22,48 @@ struct ClawMachine {
 }
 
 impl ClawMachine {
-    fn from_input(bytes: &[u8]) -> (Self, usize) {
-        let mut cur = 0;
-        while bytes[cur] == b'\n' {
-            cur += 1;
+    fn from_input(parser: &mut Parser) -> Option<Self> {
+        parser.skip_whitespace();
+        if parser.eof() {
+            return None;
         }
-        cur += 11;
-        assert_eq!(bytes[cur], b'+');
-        cur += 1;
-        let mut a_x = 0;
-        while bytes[cur].is_ascii_digit() {
-            a_x *= 10;
-            a_x += (bytes[cur] - b'0') as i64;
-            cur += 1;
-        }
-        assert_eq!(bytes[cur], b',');
-        cur += 3;
-        assert_eq!(bytes[cur], b'+');
-        cur += 1;
-        let mut a_y = 0;
-        while bytes[cur].is_ascii_digit() {
-            a_y *= 10;
-            a_y += (bytes[cur] - b'0') as i64;
-            cur += 1;
-        }
-        assert_eq!(bytes[cur], b'\n');
-        cur += 12;
-        assert_eq!(bytes[cur], b'+');
-        cur += 1;
-        let mut b_x = 0;
-        while bytes[cur].is_ascii_digit() {
-            b_x *= 10;
-            b_x += (bytes[cur] - b'0') as i64;
-            cur += 1;
-        }
-        assert_eq!(bytes[cur], b',');
-        cur += 3;
-        assert_eq!(bytes[cur], b'+');
-        cur += 1;
-        let mut b_y = 0;
-        while bytes[cur].is_ascii_digit() {
-            b_y *= 10;
-            b_y += (bytes[cur] - b'0') as i64;
-            cur += 1;
-        }
-        assert_eq!(bytes[cur], b'\n');
-        cur += 9;
-        assert_eq!(bytes[cur], b'=');
-        cur += 1;
-        let mut p_x = 0;
-        while bytes[cur].is_ascii_digit() {
-            p_x *= 10;
-            p_x += (bytes[cur] - b'0') as i64;
-            cur += 1;
-        }
-        p_x += 10000000000000;
-        assert_eq!(bytes[cur], b',');
-        cur += 3;
-        assert_eq!(bytes[cur], b'=');
-        cur += 1;
-        let mut p_y = 0;
-        while cur < bytes.len() && bytes[cur].is_ascii_digit() {
-            p_y *= 10;
-            p_y += (bytes[cur] - b'0') as i64;
-            cur += 1;
-        }
-        p_y += 10000000000000;
-        (
-            ClawMachine {
-                a_x,
-                a_y,
-                b_x,
-                b_y,
-                p_x,
-                p_y,
-            },
-            cur,
-        )
+        parser.cur += 11;
+        debug_assert_eq!(parser.peek(), Some(&b'+'));
+        parser.cur += 1;
+        let a_x = parser.parse_usize()? as i64;
+        debug_assert_eq!(parser.peek(), Some(&b','));
+        parser.cur += 3;
+        debug_assert_eq!(parser.peek(), Some(&b'+'));
+        parser.cur += 1;
+        let a_y = parser.parse_usize()? as i64;
+        debug_assert_eq!(parser.peek(), Some(&b'\n'));
+        parser.cur += 12;
+        debug_assert_eq!(parser.peek(), Some(&b'+'));
+        parser.cur += 1;
+        let b_x = parser.parse_usize()? as i64;
+        debug_assert_eq!(parser.peek(), Some(&b','));
+        parser.cur += 3;
+        debug_assert_eq!(parser.peek(), Some(&b'+'));
+        parser.cur += 1;
+        let b_y = parser.parse_usize()? as i64;
+        debug_assert_eq!(parser.peek(), Some(&b'\n'));
+        parser.cur += 9;
+        debug_assert_eq!(parser.peek(), Some(&b'='));
+        parser.cur += 1;
+        let p_x = 10000000000000 + parser.parse_usize()? as i64;
+        debug_assert_eq!(parser.peek(), Some(&b','));
+        parser.cur += 3;
+        debug_assert_eq!(parser.peek(), Some(&b'='));
+        parser.cur += 1;
+        let p_y = 10000000000000 + parser.parse_usize()? as i64;
+        Some(ClawMachine {
+            a_x,
+            a_y,
+            b_x,
+            b_y,
+            p_x,
+            p_y,
+        })
     }
 
     fn token_cost(&self) -> i64 {
@@ -135,12 +102,9 @@ impl ClawMachine {
 }
 
 fn run(input: &str) -> i64 {
-    let bytes = input.as_bytes();
-    let mut cur = 0;
+    let mut parser = Parser::from_input(&input);
     let mut res = 0;
-    while cur + 10 < bytes.len() {
-        let (claw, c) = ClawMachine::from_input(&bytes[cur..]);
-        cur += c;
+    while let Some(claw) = ClawMachine::from_input(&mut parser) {
         res += claw.token_cost()
     }
     res

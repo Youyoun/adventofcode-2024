@@ -130,7 +130,7 @@ fn test_loop(
 ) -> bool {
     let mut passages = VecBitSet::new(bitset_size(grid.width * grid.height));
     while let Some(pos2) = next_block(new_box, pos, dir, blocs_x, blocs_y) {
-        if dir == Up  {
+        if dir == Up {
             if passages.test(grid.cur(pos2)) {
                 return true;
             } else {
