@@ -28,9 +28,7 @@ fn run(input: [:0]const u8) i64 {
         _ = it.next();
         const coeffs_A = parseRow(A_row, "+");
         const coeffs_B = parseRow(B_row, "+");
-        var prize = parseRow(prize_row, "=");
-        prize.x += 10000000000000;
-        prize.y += 10000000000000;
+        const prize = parseRow(prize_row, "=");
         const det = coeffs_A.x * coeffs_B.y - coeffs_B.x * coeffs_A.y;
         const num_A = coeffs_B.y * prize.x - coeffs_B.x * prize.y;
         const num_B = coeffs_A.x * prize.y - coeffs_A.y * prize.x;
