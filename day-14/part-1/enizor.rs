@@ -14,7 +14,6 @@ fn main() {
 const TIME: isize = 100;
 
 fn run(input: &str) -> usize {
-    // Your code goes here
     const WIDTH: isize = 101;
     const LENGTH: isize = 103;
     let bytes = input.as_bytes();
@@ -35,7 +34,6 @@ fn run(input: &str) -> usize {
         p_y= p_y.rem_euclid(LENGTH);
 
         if p_x != WIDTH / 2 && p_y != LENGTH / 2{
-            // dbg!(p_x, p_y);
             let mut q = 0;
             q += if p_x < WIDTH / 2 { 0 } else { 1 };
             q += if p_y < LENGTH / 2 { 0 } else { 2 };
@@ -43,14 +41,12 @@ fn run(input: &str) -> usize {
         }
 
     }
-    // dbg!(&quadrants);
     quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3]
 }
 
 
 #[allow(dead_code)]
 fn run_small(input: &str) -> usize {
-    // Your code goes here
     const WIDTH: isize = 11;
     const LENGTH: isize = 7;
     let bytes = input.as_bytes();
@@ -71,7 +67,6 @@ fn run_small(input: &str) -> usize {
         p_y= p_y.rem_euclid(LENGTH);
 
         if p_x != WIDTH / 2 && p_y != LENGTH / 2{
-            // dbg!(p_x, p_y);
             let mut q = 0;
             q += if p_x < WIDTH / 2 { 0 } else { 1 };
             q += if p_y < LENGTH / 2 { 0 } else { 2 };
@@ -79,7 +74,6 @@ fn run_small(input: &str) -> usize {
         }
 
     }
-    // dbg!(&quadrants);
     quadrants[0] * quadrants[1] * quadrants[2] * quadrants[3]
 }
 
