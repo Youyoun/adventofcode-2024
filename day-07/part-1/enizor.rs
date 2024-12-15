@@ -1,6 +1,8 @@
 use std::env::args;
 use std::time::Instant;
 
+use aoc::enizor::parser::Parser;
+
 fn main() {
     let now = Instant::now();
     let output = run(&args().nth(1).expect("Please provide an input"));
@@ -10,27 +12,14 @@ fn main() {
 }
 
 fn parse_line(line: &[u8]) -> (usize, Vec<usize>) {
-    let mut cur = 0;
-    let mut v = 0;
-    while line[cur].is_ascii_digit() {
-        v *= 10;
-        v += (line[cur] - b'0') as usize;
-        cur += 1;
-    }
-    assert_eq!(line[cur], b':');
-    cur += 1;
+    let mut parser = Parser::from_input(&line);
+    let v = parser.parse_usize().unwrap();
+    debug_assert_eq!(parser.peek(), Some(&b':'));
+    parser.cur += 2;
     let mut inputs = Vec::with_capacity(16);
-    for b in &line[cur..] {
-        match b {
-            b' ' => inputs.push(0),
-            _ => {
-                assert!(b.is_ascii_digit());
-                let l = inputs.last_mut().unwrap();
-                *l *= 10;
-                *l += (b - b'0') as usize;
-            }
-        }
-        cur += 1;
+    while let Some(w) = parser.parse_usize() {
+        inputs.push(w);
+        parser.cur += 1;
     }
     (v, inputs)
 }

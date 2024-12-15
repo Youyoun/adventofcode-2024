@@ -1,3 +1,4 @@
+#[derive(Debug, Clone, Copy)]
 pub struct Parser<'a> {
     pub bytes: &'a [u8],
     pub cur: usize,
@@ -56,10 +57,11 @@ impl<'a> Parser<'a> {
             Some(mag)
         }
     }
-    pub fn find_str(&mut self, str: &str) -> bool {
-        let search_bytes = str.as_bytes();
+    pub fn find_str(&mut self, needle: &str) -> bool {
+        let search_bytes = needle.as_bytes();
         while self.cur < self.bytes.len() {
             if self.bytes[self.cur..].starts_with(search_bytes) {
+                self.cur += needle.len();
                 return true;
             }
             self.cur += 1;
@@ -73,5 +75,14 @@ impl<'a> Parser<'a> {
     }
     pub fn peek(&mut self) -> Option<&u8> {
         self.bytes.get(self.cur)
+    }
+}
+
+impl<'a> Iterator for Parser<'a> {
+    type Item = &'a u8;
+
+    fn next(&mut self) -> Option<&'a u8> {
+        self.cur += 1;
+        self.bytes.get(self.cur - 1)
     }
 }
