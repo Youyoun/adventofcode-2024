@@ -1,7 +1,11 @@
-use std::env::args;
+use std::env::{self, args};
 use std::time::Instant;
+use std::{hint, thread};
 
 use aoc::enizor::parser::Parser;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+static GLOBAL_RESULT: AtomicUsize = AtomicUsize::new(0);
 
 fn main() {
     let now = Instant::now();
@@ -57,31 +61,61 @@ fn has_ff(v: u128) -> bool {
     ff_or_not_high_bit & high_bit > 0
 }
 
-fn run(input: &str) -> usize {
-    let bytes = input.as_bytes();
-    let mut drones = Vec::new();
-    for line in bytes.split(|&b| b == b'\n') {
-        let mut p = Parser::from_input(&line);
-        p.cur += 2;
-        let p_x = p.parse_usize().expect("failed to parse input");
-        p.cur += 1;
-        let p_y = p.parse_usize().expect("failed to parse input");
-        p.cur += 3;
-        let v_x = p
-            .parse_isize()
-            .expect("failed to parse input")
-            .rem_euclid(WIDTH as isize) as usize;
-        p.cur += 1;
-        let v_y = p
-            .parse_isize()
-            .expect("failed to parse input")
-            .rem_euclid(LENGTH as isize) as usize;
-        drones.push((p_x, p_y, v_x, v_y));
+fn run_monothread(drones: &mut [(usize, usize, usize, usize)]) -> usize {
+    for t in 1..=WIDTH * LENGTH {
+        let mut line_count = 0;
+        // let mut line_check = [0; LENGTH];
+        let mut line_check = [0; LENGTH];
+        for (p_x, p_y, v_x, v_y) in drones.iter_mut() {
+            *p_x += *v_x;
+            if *p_x >= WIDTH {
+                *p_x -= WIDTH;
+            }
+            *p_y += *v_y;
+            if *p_y >= LENGTH {
+                *p_y -= LENGTH;
+            }
+            line_check[*p_y] += 1 << *p_x;
+        }
+        for line in &line_check {
+            if has_ff(*line) {
+                line_count += 1;
+                if line_count >= 4 {
+                    if DBG_PRINT_DRONES {
+                        eprintln!("\n----- t = {} -----\n", t);
+                        print_drones(drones);
+                    }
+                    return WIDTH * LENGTH - t;
+                }
+            }
+        }
     }
-    if DBG_PRINT_DRONES {
-        print_drones(&drones);
+    0
+}
+
+fn run_multithread(min: usize, max: usize, drones: &mut [(usize, usize, usize, usize)]) {
+    // init: skip `id` turns
+    let mut line_count = 0;
+    let mut line_check = [0; LENGTH];
+    let mut t = min;
+    for (p_x, p_y, v_x, v_y) in drones.iter_mut() {
+        *p_x += *v_x * min;
+        *p_x %= WIDTH;
+        *p_y += *v_y * min;
+        *p_y %= LENGTH;
+        line_check[*p_y] += 1 << *p_x;
     }
-    for t in 1..=1000000 {
+    for line in &line_check {
+        if has_ff(*line) {
+            line_count += 1;
+            if line_count >= 4 {
+                GLOBAL_RESULT.store(WIDTH * LENGTH - t, Ordering::Release);
+                return;
+            }
+        }
+    }
+    while t < max {
+        t += 1;
         let mut line_count = 0;
         let mut line_check = [0; LENGTH];
         for (p_x, p_y, v_x, v_y) in drones.iter_mut() {
@@ -95,18 +129,67 @@ fn run(input: &str) -> usize {
             }
             line_check[*p_y] |= 1 << *p_x;
         }
-        if DBG_PRINT_DRONES {
-            eprintln!("\n----- t = {} -----\n", t);
-            print_drones(&drones);
-        }
         for line in &line_check {
             if has_ff(*line) {
-                line_count += 1
+                line_count += 1;
+                if line_count >= 4 {
+                    GLOBAL_RESULT.store(WIDTH * LENGTH - t, Ordering::Release);
+                    return;
+                }
             }
         }
-        if line_count > 2 {
-            return t;
+        if GLOBAL_RESULT.load(Ordering::Acquire) != 0 {
+            break;
         }
     }
-    0
+}
+
+fn run(input: &str) -> usize {
+    let bytes = input.as_bytes();
+    let mut drones = Vec::new();
+    for line in bytes.split(|&b| b == b'\n') {
+        let mut p = Parser::from_input(&line);
+        p.cur += 2;
+        let p_x = p.parse_usize().expect("failed to parse input");
+        p.cur += 1;
+        let p_y = p.parse_usize().expect("failed to parse input");
+        p.cur += 3;
+        let v_x = p
+            .parse_isize()
+            .map(|v| -v)
+            .expect("failed to parse input")
+            .rem_euclid(WIDTH as isize) as usize;
+        p.cur += 1;
+        let v_y = p
+            .parse_isize()
+            .map(|v| -v)
+            .expect("failed to parse input")
+            .rem_euclid(LENGTH as isize) as usize;
+        drones.push((p_x, p_y, v_x, v_y));
+    }
+    if DBG_PRINT_DRONES {
+        print_drones(&drones);
+    }
+    let nb_threads = env::var("ENIZOR_DAY_14_NB_THREADS")
+        .ok()
+        .and_then(|v| v.parse::<usize>().ok())
+        .unwrap_or(0);
+    if nb_threads < 2 {
+        run_monothread(&mut drones)
+    } else {
+        thread::scope(|s| {
+            let mut handles = Vec::new();
+            for i in 0..nb_threads - 1 {
+                let mut drones2 = drones.clone();
+                let block_size = WIDTH * LENGTH / nb_threads + 1;
+                handles.push(s.spawn(move || {
+                    run_multithread(i * block_size, (i + 1) * block_size, &mut drones2);
+                }));
+            }
+            while GLOBAL_RESULT.load(Ordering::Acquire) == 0 {
+                hint::spin_loop();
+            }
+            GLOBAL_RESULT.load(Ordering::Acquire)
+        })
+    }
 }
