@@ -42,10 +42,16 @@ impl VecBitSet {
             bits: vec![!0; n.into()],
         }
     }
+    pub fn ensure_size(&mut self, n: impl Into<usize>) {
+        let l = n.into();
+        if self.bits.len() < l {
+            self.bits.resize(l, 0);
+        }
+    }
 }
 
 pub struct BitSet<T: AsMut<[u64]> + AsRef<[u64]>> {
-    bits: T,
+    pub bits: T,
 }
 
 impl<T: AsMut<[u64]> + AsRef<[u64]>> BitSet<T> {
