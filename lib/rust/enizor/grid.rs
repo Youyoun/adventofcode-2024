@@ -5,8 +5,8 @@ use std::ops::Index;
 pub enum Direction {
     Left = 0,
     #[default]
-    Right = 1,
-    Up = 2,
+    Up = 1,
+    Right = 2,
     Down = 3,
 }
 
