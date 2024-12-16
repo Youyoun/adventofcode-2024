@@ -13,15 +13,14 @@ class YouyounSubmission(SubmissionPy):
         for line in ordering:
             page1, page2 = line.split("|")
             if page1 not in order_map:
-                order_map[page1] = {"before": set(), "after": set()}
+                order_map[page1] = set()
             if page2 not in order_map:
-                order_map[page2] = {"before": set(), "after": set()}
-            order_map[page1]["after"].add(page2)
-            order_map[page2]["before"].add(page1)
+                order_map[page2] = set()
+            order_map[page2].add(page1)
         count = 0
         for update in updates:
             pages = update.split(",")
-            sorted_pages = sorted(pages, key=cmp_to_key(lambda x,y: 1 if y in order_map[x]["before"] else -1))
+            sorted_pages = sorted(pages, key=cmp_to_key(lambda x,y: 1 if y in order_map[x] else -1))
             if pages == sorted_pages:
                 continue
             count += int(sorted_pages[len(sorted_pages) // 2])

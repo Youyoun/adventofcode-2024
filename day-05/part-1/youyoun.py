@@ -1,3 +1,5 @@
+from functools import cmp_to_key
+
 from tool.runners.python import SubmissionPy
 
 
@@ -12,30 +14,15 @@ class YouyounSubmission(SubmissionPy):
         for line in ordering:
             page1, page2 = line.split("|")
             if page1 not in order_map:
-                order_map[page1] = {"before": set(), "after": set()}
+                order_map[page1] = set()
             if page2 not in order_map:
-                order_map[page2] = {"before": set(), "after": set()}
-            order_map[page1]["after"].add(page2)
-            order_map[page2]["before"].add(page1)
+                order_map[page2] = set()
+            order_map[page2].add(page1)
         count = 0
         for update in updates:
-            is_in_right_order = True
             pages = update.split(",")
-            for i in range(len(pages)):
-                current_page = pages[i]
-                if i > 0:
-                    for prev_p in pages[:i]:
-                        if prev_p not in order_map[current_page]["before"]:
-                            is_in_right_order = False
-                            break
-                if i < len(pages) - 1:
-                    for next_p in pages[i + 1 :]:
-                        if next_p not in order_map[current_page]["after"]:
-                            is_in_right_order = False
-                            break
-                if not is_in_right_order:
-                    break
-            if is_in_right_order:
+            sorted_pages = sorted(pages, key=cmp_to_key(lambda x,y: 1 if y in order_map[x] else -1))
+            if pages == sorted_pages:
                 count += int(pages[len(pages) // 2])
         return count
 
