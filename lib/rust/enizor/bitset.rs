@@ -102,38 +102,38 @@ impl<T: AsMut<[u64]> + AsRef<[u64]>> BitSet<T> {
     }
 }
 
-impl<T: AsMut<[u64]> + AsRef<[u64]>> BitAnd for BitSet<T> {
+impl<T: AsMut<[u64]> + AsRef<[u64]>> BitAnd<&BitSet<T>> for BitSet<T> {
     type Output = Self;
 
     #[inline(always)]
-    fn bitand(mut self, rhs: Self) -> Self::Output {
+    fn bitand(mut self, rhs: &Self) -> Self::Output {
         self &= rhs;
         self
     }
 }
 
-impl<T: AsMut<[u64]> + AsRef<[u64]>> BitAndAssign for BitSet<T> {
+impl<T: AsMut<[u64]> + AsRef<[u64]>> BitAndAssign<&BitSet<T>> for BitSet<T> {
     #[inline(always)]
-    fn bitand_assign(&mut self, rhs: Self) {
+    fn bitand_assign(&mut self, rhs: &BitSet<T>) {
         for i in 0..self.bits.as_ref().len() {
             self.bits.as_mut()[i] &= rhs.bits.as_ref()[i];
         }
     }
 }
 
-impl<T: AsMut<[u64]> + AsRef<[u64]>> BitOr for BitSet<T> {
+impl<T: AsMut<[u64]> + AsRef<[u64]>> BitOr<&BitSet<T>> for BitSet<T> {
     type Output = Self;
 
     #[inline(always)]
-    fn bitor(mut self, rhs: Self) -> Self::Output {
+    fn bitor(mut self, rhs: &Self) -> Self::Output {
         self |= rhs;
         self
     }
 }
 
-impl<T: AsMut<[u64]> + AsRef<[u64]>> BitOrAssign for BitSet<T> {
+impl<T: AsMut<[u64]> + AsRef<[u64]>> BitOrAssign<&BitSet<T>>for BitSet<T> {
     #[inline(always)]
-    fn bitor_assign(&mut self, rhs: Self) {
+    fn bitor_assign(&mut self, rhs: &Self) {
         for i in 0..self.bits.as_ref().len() {
             self.bits.as_mut()[i] |= rhs.bits.as_ref()[i];
         }
