@@ -36,3 +36,107 @@ path = "./day-01/part-2/giltho.rs"
 [[bin]]
 name = "day-02-part-1-giltho"
 path = "./day-02/part-1/giltho.rs"
+
+[[bin]]
+name = "day-05-part-1-enizor"
+path = "./day-05/part-1/enizor.rs"
+
+[[bin]]
+name = "day-05-part-2-enizor"
+path = "./day-05/part-2/enizor.rs"
+
+[[bin]]
+name = "day-03-part-1-enizor"
+path = "./day-03/part-1/enizor.rs"
+
+[[bin]]
+name = "day-03-part-2-enizor"
+path = "./day-03/part-2/enizor.rs"
+
+[[bin]]
+name = "day-04-part-1-enizor"
+path = "./day-04/part-1/enizor.rs"
+
+[[bin]]
+name = "day-04-part-2-enizor"
+path = "./day-04/part-2/enizor.rs"
+
+[[bin]]
+name = "day-06-part-1-enizor"
+path = "./day-06/part-1/enizor.rs"
+
+[[bin]]
+name = "day-06-part-2-enizor"
+path = "./day-06/part-2/enizor.rs"
+
+[[bin]]
+name = "day-07-part-1-enizor"
+path = "./day-07/part-1/enizor.rs"
+
+[[bin]]
+name = "day-07-part-2-enizor"
+path = "./day-07/part-2/enizor.rs"
+
+[[bin]]
+name = "day-08-part-1-enizor"
+path = "./day-08/part-1/enizor.rs"
+
+[[bin]]
+name = "day-08-part-2-enizor"
+path = "./day-08/part-2/enizor.rs"
+
+[[bin]]
+name = "day-09-part-1-enizor"
+path = "./day-09/part-1/enizor.rs"
+
+[[bin]]
+name = "day-09-part-2-enizor"
+path = "./day-09/part-2/enizor.rs"
+
+[[bin]]
+name = "day-10-part-1-enizor"
+path = "./day-10/part-1/enizor.rs"
+
+[[bin]]
+name = "day-10-part-2-enizor"
+path = "./day-10/part-2/enizor.rs"
+
+[[bin]]
+name = "day-11-part-1-enizor"
+path = "./day-11/part-1/enizor.rs"
+
+[[bin]]
+name = "day-11-part-2-enizor"
+path = "./day-11/part-2/enizor.rs"
+
+[[bin]]
+name = "day-12-part-1-enizor"
+path = "./day-12/part-1/enizor.rs"
+
+[[bin]]
+name = "day-12-part-2-enizor"
+path = "./day-12/part-2/enizor.rs"
+
+[[bin]]
+name = "day-13-part-1-enizor"
+path = "./day-13/part-1/enizor.rs"
+
+[[bin]]
+name = "day-13-part-2-enizor"
+path = "./day-13/part-2/enizor.rs"
+
+[[bin]]
+name = "day-14-part-1-enizor"
+path = "./day-14/part-1/enizor.rs"
+
+[[bin]]
+name = "day-14-part-2-enizor"
+path = "./day-14/part-2/enizor.rs"
+
+[[bin]]
+name = "day-15-part-1-enizor"
+path = "./day-15/part-1/enizor.rs"
+
+[[bin]]
+name = "day-15-part-2-enizor"
+path = "./day-15/part-2/enizor.rs"

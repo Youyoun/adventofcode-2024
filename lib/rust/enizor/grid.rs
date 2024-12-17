@@ -3,11 +3,30 @@ use std::ops::Index;
 #[repr(u8)]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Direction {
-    Left = 0b1,
+    Left = 0,
     #[default]
-    Right = 0b10,
-    Up = 0b100,
-    Down = 0b1000,
+    Right = 1,
+    Up = 2,
+    Down = 3,
+}
+
+impl Direction {
+    pub fn turn_indirect(&mut self) {
+        *self = match self {
+            Right => Down,
+            Down => Left,
+            Left => Up,
+            Up => Right,
+        }
+    }
+    pub fn turn_direct(&mut self) {
+        *self = match self {
+            Right => Up,
+            Down => Right,
+            Left => Down,
+            Up => Left,
+        }
+    }
 }
 
 use Direction::*;
@@ -28,7 +47,7 @@ pub struct StrGrid<'a> {
 }
 
 impl<'a> StrGrid<'a> {
-    pub fn from_input(input_str: &'a str) -> StrGrid {
+    pub fn from_input(input_str: &'a str) -> Self {
         let bytes = input_str.as_bytes();
         let w = bytes
             .iter()
@@ -63,7 +82,7 @@ impl<'a> StrGrid<'a> {
     pub fn step(&self, pos: Position, dir: Direction) -> Option<Position> {
         let mut pos2 = pos;
         if self.step_mut(&mut pos2, dir) {
-            Some(pos)
+            Some(pos2)
         } else {
             None
         }
@@ -83,9 +102,12 @@ impl<'a> StrGrid<'a> {
         }
         true
     }
+    pub fn valid_pos(&self, pos: Position) -> bool {
+        pos.x < self.width - 1 && pos.y < self.height
+    }
 }
 
-impl<'a> Index<Position> for StrGrid<'a> {
+impl Index<Position> for StrGrid<'_> {
     type Output = u8;
 
     #[inline(always)]
@@ -95,7 +117,7 @@ impl<'a> Index<Position> for StrGrid<'a> {
 }
 
 use std::fmt;
-impl<'a> fmt::Debug for StrGrid<'a> {
+impl fmt::Debug for StrGrid<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,

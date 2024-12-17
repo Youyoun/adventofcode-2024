@@ -1,6 +1,8 @@
 use std::env::args;
 use std::time::Instant;
 
+use aoc::enizor::parser::Parser;
+
 fn main() {
     let now = Instant::now();
     let output = run(&args().nth(1).expect("Please provide an input"));
@@ -9,19 +11,20 @@ fn main() {
     println!("{}", output);
 }
 
-fn run(input: &str) -> u32 {
+fn run(input: &str) -> usize {
     // Your code goes here
     let mut left = Vec::with_capacity(input.len() / 16);
     let mut right = Vec::with_capacity(input.len() / 16);
     let mut even = true;
-    for i in input.split_whitespace() {
-        let v: u32 = i.parse().expect("failed to parse input");
+    let mut parser = Parser::from_input(&input);
+    while let Some(v) = parser.parse_usize() {
         if even {
             left.push(v);
         } else {
             right.push(v);
         }
         even = !even;
+        parser.skip_whitespace();
     }
     left.sort_unstable();
     right.sort_unstable();
