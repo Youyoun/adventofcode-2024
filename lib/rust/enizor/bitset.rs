@@ -54,6 +54,16 @@ pub struct BitSet<T: AsMut<[u64]> + AsRef<[u64]>> {
     pub bits: T,
 }
 
+impl<T: Copy + AsMut<[u64]> + AsRef<[u64]>> Copy for BitSet<T> {}
+
+impl<T: Clone + AsMut<[u64]> + AsRef<[u64]>> Clone for BitSet<T> {
+    fn clone(&self) -> Self {
+        Self {
+            bits: self.bits.clone(),
+        }
+    }
+}
+
 impl<T: AsMut<[u64]> + AsRef<[u64]>> BitSet<T> {
     #[inline(always)]
     pub fn test(&self, n: impl Into<usize>) -> bool {
@@ -131,7 +141,7 @@ impl<T: AsMut<[u64]> + AsRef<[u64]>> BitOr<&BitSet<T>> for BitSet<T> {
     }
 }
 
-impl<T: AsMut<[u64]> + AsRef<[u64]>> BitOrAssign<&BitSet<T>>for BitSet<T> {
+impl<T: AsMut<[u64]> + AsRef<[u64]>> BitOrAssign<&BitSet<T>> for BitSet<T> {
     #[inline(always)]
     fn bitor_assign(&mut self, rhs: &Self) {
         for i in 0..self.bits.as_ref().len() {
