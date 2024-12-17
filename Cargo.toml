@@ -5,9 +5,13 @@ authors = []
 rust-version = "1.74"
 edition = "2021"
 
+[dependencies]
+regex = "1.11.1"
+
 [lib]
 name = "aoc"
 path = "./lib/rust/lib.rs"
+
 
 [[bin]]
 name = "day-01-part-1-enizor"
@@ -140,3 +144,11 @@ path = "./day-15/part-1/enizor.rs"
 [[bin]]
 name = "day-15-part-2-enizor"
 path = "./day-15/part-2/enizor.rs"
+
+[[bin]]
+name = "day-03-part-1-giltho"
+path = "./day-03/part-1/giltho.rs"
+
+[[bin]]
+name = "day-03-part-2-giltho"
+path = "./day-03/part-2/giltho.rs"
