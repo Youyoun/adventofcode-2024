@@ -1,3 +1,4 @@
+from collections import deque
 from tool.runners.python import SubmissionPy
 
 INSTRUCTIONS = {
@@ -34,13 +35,15 @@ class ThomrenSubmission(SubmissionPy):
             x, y = bot_pos
             if move(world, (x, y), (dx, dy)):
                 bot_pos = x + dx, y + dy
+                world[x + dx][y + dy] = "@"
+                world[x][y] = "."
             print(ins)
             print("\n".join("".join(line) for line in world))
             print()
         res = 0
         for i in range(len(world)):
             for j in range(len(world[i])):
-                if world[i][j] == "O":
+                if world[i][j] in "[]":
                     res += 100 * i + j
         return res
 
@@ -50,24 +53,39 @@ def move(world, pos, direction):
     dx, dy = direction
     if world[x + dx][y + dy] == "#":
         return False
-    if world[x + dx][y + dy] == ".":
+    elif world[x + dx][y + dy] == ".":
         world[x + dx][y + dy] = world[x][y]
         world[x][y] = "."
-        print(x, y, dx, dy)
         return True
-    emptied = move(world, (x + dx, y + dy), direction)
-    if not emptied:
-        return False
-    if world[x + dx][y + dy] == "[" and not move(
-        world, (x + dx, y + 1 + dy), direction
-    ):
-        return False
-    if world[x + dx][y + dy] == "]" and not move(
-        world, (x + dx, y - 1 + dy), direction
-    ):
-        return False
-    world[x + dx][y + dy] = world[x][y]
-    world[x][y] = "."
+    elif world[x + dx][y + dy] == "[":
+        queue = [(x + dx, y + dy)]
+    elif world[x + dx][y + dy] == "]":
+        queue = [(x + dx, y + dy - 1)]
+
+    boxes = []
+    queue = deque(queue)
+    it = 0
+    while queue and it < 10:
+        it += 1
+        bx, by = queue.popleft()
+        if world[bx + dx][by + dy] == "#" or world[bx + dx][by + dy + 1] == "#":
+            return False
+        boxes.append((bx, by))
+        if world[bx + dx][by + dy] == "[":
+            queue.append((bx + dx, by + dy))
+        elif world[bx + dx][by + dy] == "]":
+            if (dx, dy) == (0, 1):
+                queue.append((bx + dx, by + dy + 1))
+            elif (dx, dy) == (0, -1):
+                queue.append((bx + dx, by + dy - 1))
+            elif dx != 0 and world[bx + dx][by + dy - 1] == "[":
+                queue.append((bx + dx, by + dy + 1))
+    for bx, by in boxes[::-1]:
+        world[bx][by] = "."
+        world[bx][by + 1] = "."
+    for bx, by in boxes[::-1]:
+        world[bx + dx][by + dy] = "["
+        world[bx + dx][by + dy + 1] = "]"
     return True
 
 
@@ -78,15 +96,27 @@ def test_thomren():
     assert (
         ThomrenSubmission().run(
             """
-#######
-#...#.#
-#.....#
-#..OO@#
-#..O..#
-#.....#
-#######
+##########
+#..O..O.O#
+#......O.#
+#.OO..O.O#
+#..O@..O.#
+#O#..O...#
+#O..O..O.#
+#.OO.O.OO#
+#....O...#
+##########
 
-<vv<<^^<<^^
+<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^
+vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v
+><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<
+<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^
+^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><
+^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^
+>^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^
+<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
+^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>
+v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^
 """.strip()
         )
         == 9021
