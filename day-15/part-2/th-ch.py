@@ -94,6 +94,9 @@ class ThChSubmission(SubmissionPy):
             # )
             # from time import sleep; sleep(0.1)
 
+        print(
+            "\n".join(f"{j},{i}" for i, j in sorted(boxes, key=lambda p: (p[1], p[0])))
+        )
         return sum(100 * y + x for x, y in boxes)
 
 

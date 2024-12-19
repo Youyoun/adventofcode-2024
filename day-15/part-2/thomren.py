@@ -10,6 +10,8 @@ INSTRUCTIONS = {
 
 EXPAND = {"#": "##", "O": "[]", ".": "..", "@": "@."}
 
+DEBUG = False
+
 
 class ThomrenSubmission(SubmissionPy):
     def run(self, s: str):
@@ -18,34 +20,109 @@ class ThomrenSubmission(SubmissionPy):
         :return: solution flag
         """
         world, instructions = s.split("\n\n")
-        world = (
-            world.replace("#", "##")
-            .replace("O", "[]")
-            .replace(".", "..")
-            .replace("@", "@.")
-        )
-        bot_idx = world.index("@")
-        world = [[c for c in line] for line in world.splitlines()]
-        height, width = len(world), len(world[0])
-        bot_pos = bot_idx // (width + 1), (bot_idx % (width + 1))
+        world = simulate(world, instructions)
+
+        # print("\n".join("".join(line) for line in world))
+        # print()
+
+        # scoring
+        res = 0
+        boxes = []
+        for i in range(len(world)):
+            for j in range(len(world[i])):
+                if world[i][j] == "[":
+                    boxes.append(f"{i},{j}")
+                    res += 100 * i + j
+        print("\n".join(boxes))
+        return res
+
+
+def simulate(world_str: str, instructions: str):
+    # parsing
+    world_str = (
+        world_str.replace("#", "##")
+        .replace("O", "[]")
+        .replace(".", "..")
+        .replace("@", "@.")
+    )
+    bot_idx = world_str.index("@")
+    world = [[c for c in line] for line in world_str.splitlines()]
+    height, width = len(world), len(world[0])
+    bot_pos = bot_idx // (width + 1), (bot_idx % (width + 1))
+    if DEBUG:
+        print("Start state")
         print("\n".join("".join(line) for line in world))
         print()
-        for ins in instructions.replace("\n", ""):
-            dx, dy = INSTRUCTIONS[ins]
-            x, y = bot_pos
-            if move(world, (x, y), (dx, dy)):
-                bot_pos = x + dx, y + dy
-                world[x + dx][y + dy] = "@"
-                world[x][y] = "."
+
+    # simulation
+    for ins in instructions.replace("\n", ""):
+        dx, dy = INSTRUCTIONS[ins]
+        x, y = bot_pos
+        if move(world, (x, y), (dx, dy)):
+            bot_pos = x + dx, y + dy
+            world[x + dx][y + dy] = "@"
+            world[x][y] = "."
+        if DEBUG:
             print(ins)
             print("\n".join("".join(line) for line in world))
             print()
-        res = 0
-        for i in range(len(world)):
-            for j in range(len(world[i])):
-                if world[i][j] in "[]":
-                    res += 100 * i + j
-        return res
+    return world
+
+
+def move_box(world, pos, direction):
+    x, y = pos
+    match direction:
+        case (0, 1):
+            if world[x][y + 2] == "[" and not move_box(world, (x, y + 2), direction):
+                return False
+            if world[x][y + 2] == "#":
+                return False
+            world[x][y + 1] = "["
+            world[x][y + 2] = "]"
+            world[x][y] = "."
+        case (0, -1):
+            if world[x][y - 1] == "]" and not move_box(world, (x, y - 2), direction):
+                return False
+            if world[x][y - 1] == "#":
+                return False
+            world[x][y - 1] = "["
+            world[x][y] = "]"
+            world[x][y + 1] = "."
+        case (1, 0):
+            if world[x + 1][y] == "#" or world[x + 1][y + 1] == "#":
+                return False
+            if world[x + 1][y] == "[" and not move_box(world, (x + 1, y), direction):
+                return False
+            if world[x + 1][y] == "]" and not move_box(
+                world, (x + 1, y - 1), direction
+            ):
+                return False
+            if world[x + 1][y + 1] == "[" and not move_box(
+                world, (x + 1, y + 1), direction
+            ):
+                return False
+            world[x + 1][y] = "["
+            world[x + 1][y + 1] = "]"
+            world[x][y] = "."
+            world[x][y + 1] = "."
+        case (-1, 0):
+            if world[x - 1][y] == "#" or world[x - 1][y + 1] == "#":
+                return False
+            if world[x - 1][y] == "[" and not move_box(world, (x - 1, y), direction):
+                return False
+            if world[x - 1][y] == "]" and not move_box(
+                world, (x - 1, y - 1), direction
+            ):
+                return False
+            if world[x - 1][y + 1] == "[" and not move_box(
+                world, (x - 1, y + 1), direction
+            ):
+                return False
+            world[x - 1][y] = "["
+            world[x - 1][y + 1] = "]"
+            world[x][y] = "."
+            world[x][y + 1] = "."
+    return True
 
 
 def move(world, pos, direction):
@@ -58,35 +135,61 @@ def move(world, pos, direction):
         world[x][y] = "."
         return True
     elif world[x + dx][y + dy] == "[":
-        queue = [(x + dx, y + dy)]
+        return move_box(world, (x + dx, y + dy), direction)
     elif world[x + dx][y + dy] == "]":
-        queue = [(x + dx, y + dy - 1)]
+        return move_box(world, (x + dx, y + dy - 1), direction)
 
-    boxes = []
-    queue = deque(queue)
-    it = 0
-    while queue and it < 10:
-        it += 1
-        bx, by = queue.popleft()
-        if world[bx + dx][by + dy] == "#" or world[bx + dx][by + dy + 1] == "#":
-            return False
-        boxes.append((bx, by))
-        if world[bx + dx][by + dy] == "[":
-            queue.append((bx + dx, by + dy))
-        elif world[bx + dx][by + dy] == "]":
-            if (dx, dy) == (0, 1):
-                queue.append((bx + dx, by + dy + 1))
-            elif (dx, dy) == (0, -1):
-                queue.append((bx + dx, by + dy - 1))
-            elif dx != 0 and world[bx + dx][by + dy - 1] == "[":
-                queue.append((bx + dx, by + dy + 1))
-    for bx, by in boxes[::-1]:
-        world[bx][by] = "."
-        world[bx][by + 1] = "."
-    for bx, by in boxes[::-1]:
-        world[bx + dx][by + dy] = "["
-        world[bx + dx][by + dy + 1] = "]"
-    return True
+
+def test_simulation():
+    w = simulate(
+        """
+#######
+#...#.#
+#.....#
+#..OO@#
+#..O..#
+#.....#
+#######
+""".strip(),
+        "<",
+    )
+    assert (
+        "\n".join("".join(line) for line in w)
+        == """
+##############
+##......##..##
+##..........##
+##...[][]@..##
+##....[]....##
+##..........##
+##############
+""".strip()
+    )
+
+    w = simulate(
+        """
+#######
+#.....#
+#..OOO#
+#..OO@#
+#..O..#
+#.....#
+#######
+""".strip(),
+        "<>vv<<<^",
+    )
+    assert (
+        "\n".join("".join(line) for line in w)
+        == """
+##############
+##....[][]..##
+##...[][].[]##
+##....[]....##
+##.....@....##
+##..........##
+##############
+""".strip()
+    )
 
 
 def test_thomren():
