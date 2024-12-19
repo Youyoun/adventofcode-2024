@@ -2,7 +2,7 @@ use std::cmp::Reverse;
 use std::time::Instant;
 use std::{collections::BinaryHeap, env::args};
 
-use aoc::enizor::grid::{Direction::*, StrGrid, ALL_DIRECTIONS};
+use aoc::enizor::grid::{Direction::*, StrGrid};
 
 fn main() {
     let now = Instant::now();
@@ -27,12 +27,18 @@ fn run(input: &str) -> usize {
     let mut visited = vec![false; input.len()];
     let mut queue = BinaryHeap::new();
     queue.push(Reverse((0, grid.from_cur(start_cur), Right)));
-    while let Some(Reverse((cost, pos, dir))) = queue.pop() {
-        for new_dir in ALL_DIRECTIONS {
-            if new_dir == dir {
-                if let Some(new_pos) = grid.step(pos, dir) {
-                    let new_cur = grid.cur(new_pos);
-                    let new_cost = cost + MOVE_COST;
+    queue.push(Reverse((2 * TURN_COST, grid.from_cur(start_cur), Left)));
+    while let Some(Reverse((cost, pos, mut dir))) = queue.pop() {
+        dir.turn_indirect();
+        for i in 0..3 {
+            let new_cost = if i != 1 {
+                cost + MOVE_COST + TURN_COST
+            } else {
+                cost + MOVE_COST
+            };
+            if let Some(new_pos) = grid.step(pos, dir) {
+                let new_cur = grid.cur(new_pos);
+                if !visited[new_cur] {
                     match grid.data[new_cur] {
                         b'#' | b'S' => {}
                         b'E' => return new_cost,
@@ -42,15 +48,8 @@ fn run(input: &str) -> usize {
                         _ => panic!("unexpected input at {}", new_cur),
                     }
                 }
-            } else if !visited[grid.cur(pos)] {
-                if dir as usize % 2 != new_dir as usize % 2 {
-                    let new_cost = cost + TURN_COST;
-                    queue.push(Reverse((new_cost, pos, new_dir)));
-                } else {
-                    let new_cost = cost + TURN_COST + TURN_COST;
-                    queue.push(Reverse((new_cost, pos, new_dir)));
-                }
             }
+            dir.turn_direct();
         }
         visited[grid.cur(pos)] = true;
     }
