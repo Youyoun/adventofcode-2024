@@ -84,35 +84,36 @@ fn shortest_path<const N: usize>(grid: &ArrayBitSet<N>) -> usize {
 fn run(input: &str) -> String {
     let mut grid = ArrayBitSet::<{ bitset_size(LENGTH * LENGTH) }>::new();
     let mut parser = Parser::from_input(&input);
-    let mut c = 0;
-    let mut x;
-    let mut y;
-    while c < BYTES_NUMBER && !parser.eof() {
-        x = parser.parse_usize().expect("failed to parse x coordinate");
-        parser.cur += 1;
-        y = parser.parse_usize().expect("failed to parse y coordinate");
-        parser.skip_whitespace();
-        grid.set(LENGTH * y + x);
-        c += 1;
-    }
+    // dichotomy between 0 and input.len()
+    let mut points = Vec::with_capacity(input.len() / 6);
     while !parser.eof() {
-        c += 1;
-        x = parser.parse_usize().expect("failed to parse x coordinate");
+        let x = parser.parse_usize().expect("failed to parse x coordinate");
         parser.cur += 1;
-        y = parser.parse_usize().expect("failed to parse y coordinate");
+        let y = parser.parse_usize().expect("failed to parse y coordinate");
         parser.skip_whitespace();
-        grid.set(LENGTH * y + x);
+        points.push((x, y));
+    }
+    let mut a = BYTES_NUMBER;
+    let mut b = points.len() - 1;
+    while a < b {
+        let mid = (a + b) / 2;
+        grid.clear();
+        for (x, y) in &points[0..=mid] {
+            grid.set(LENGTH * y + x);
+        }
         if shortest_path(&grid) == usize::MAX {
-            return format!("{},{}", x, y);
+            b = mid;
+        } else {
+            a = mid + 1;
         }
     }
-    "failed to find the answer!".to_string()
+    format!("{},{}", points[a].0, points[a].1)
 }
 
 #[cfg(test)]
 mod tests {
     //     use super::*;
-    //
+
     //     #[test]
     //     fn run_test() {
     //         assert_eq!(
