@@ -15,8 +15,8 @@ const DEFAULT_VAL: Vec<usize> = vec![];
 fn run(input: &str) -> u32 {
     let bytes = input.as_bytes();
     let grid = StrGrid::from_input(input);
-    let width = grid.width - 1;
-    let height = grid.height;
+    let width = grid.grid_utils.width - 1;
+    let height = grid.grid_utils.length;
     // locate all antennas
     let mut antennas = [DEFAULT_VAL; 128];
     for (cur, b) in bytes

@@ -13,7 +13,7 @@ fn main() {
 
 fn run(input: &str) -> u32 {
     let grid = StrGrid::from_input(input);
-    let mut passsage = VecBitSet::new(bitset_size(grid.width * grid.height));
+    let mut passsage = VecBitSet::new(bitset_size(grid.grid_utils.width * grid.grid_utils.length));
     let cur = input
         .as_bytes()
         .iter()

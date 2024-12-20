@@ -128,7 +128,7 @@ fn test_loop(
     blocs_x: &[&[usize]],
     blocs_y: &[&[usize]],
 ) -> bool {
-    let mut passages = VecBitSet::new(bitset_size(grid.width * grid.height));
+    let mut passages = VecBitSet::new(bitset_size(grid.grid_utils.width * grid.grid_utils.length));
     while let Some(pos2) = next_block(new_box, pos, dir, blocs_x, blocs_y) {
         if dir == Up {
             if passages.test(grid.cur(pos2)) {
@@ -151,8 +151,8 @@ fn run(input: &str) -> u32 {
         .position(|b| *b == b'^')
         .expect("failed to find starting position!");
     let start = grid.from_cur(cur);
-    let mut blocs_x = vec![Vec::new(); grid.height];
-    let mut blocs_y = vec![Vec::new(); grid.width];
+    let mut blocs_x = vec![Vec::new(); grid.grid_utils.length];
+    let mut blocs_y = vec![Vec::new(); grid.grid_utils.width];
     for (cur, _b) in input
         .as_bytes()
         .iter()

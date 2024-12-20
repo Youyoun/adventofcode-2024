@@ -110,6 +110,12 @@ impl<T: AsMut<[u64]> + AsRef<[u64]>> BitSet<T> {
         }
         None
     }
+    #[inline(always)]
+    pub fn clear(&mut self) {
+        for x in self.bits.as_mut() {
+            *x = 0;
+        }
+    }
 }
 
 impl<T: AsMut<[u64]> + AsRef<[u64]>> BitAnd<&BitSet<T>> for BitSet<T> {
