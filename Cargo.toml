@@ -168,3 +168,27 @@ path = "./day-16/part-2/enizor.rs"
 name = "day-17-part-1-enizor"
 path = "./day-17/part-1/enizor.rs"
 
+
+[[bin]]
+name = "day-18-part-1-enizor"
+path = "./day-18/part-1/enizor.rs"
+
+[[bin]]
+name = "day-18-part-2-enizor"
+path = "./day-18/part-2/enizor.rs"
+
+[[bin]]
+name = "day-19-part-1-enizor"
+path = "./day-19/part-1/enizor.rs"
+
+[[bin]]
+name = "day-19-part-2-enizor"
+path = "./day-19/part-2/enizor.rs"
+
+[[bin]]
+name = "day-20-part-1-enizor"
+path = "./day-20/part-1/enizor.rs"
+
+[[bin]]
+name = "day-20-part-2-enizor"
+path = "./day-20/part-2/enizor.rs"
