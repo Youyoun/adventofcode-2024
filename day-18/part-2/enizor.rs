@@ -1,6 +1,6 @@
-use std::cmp::Reverse;
+use std::collections::VecDeque;
+use std::env::args;
 use std::time::Instant;
-use std::{collections::BinaryHeap, env::args};
 
 use aoc::enizor::bitset::ArrayBitSet;
 use aoc::enizor::grid::{GridUtils, Position, ALL_DIRECTIONS};
@@ -54,9 +54,9 @@ fn shortest_path<const N: usize>(grid: &ArrayBitSet<N>) -> usize {
         length: LENGTH,
     };
     let mut visited = ArrayBitSet::<N>::new();
-    let mut queue = BinaryHeap::new();
-    queue.push(Reverse((0, START)));
-    while let Some(Reverse((cost, pos))) = queue.pop() {
+    let mut queue = VecDeque::with_capacity(LENGTH * LENGTH);
+    queue.push_back((0, START));
+    while let Some((cost, pos)) = queue.pop_front() {
         if pos == END {
             return cost;
         }
@@ -73,7 +73,7 @@ fn shortest_path<const N: usize>(grid: &ArrayBitSet<N>) -> usize {
             if let Some(new_pos) = grid_utils.step(pos, dir) {
                 let new_cur = grid_utils.cur(new_pos);
                 if !visited.test(new_cur) && !grid.test(new_cur) {
-                    queue.push(Reverse((new_cost, new_pos)));
+                    queue.push_back((new_cost, new_pos));
                 }
             }
         }
@@ -91,23 +91,32 @@ fn run(input: &str) -> String {
         parser.cur += 1;
         let y = parser.parse_usize().expect("failed to parse y coordinate");
         parser.skip_whitespace();
-        points.push((x, y));
+        points.push((LENGTH * y + x));
     }
+    // dichotomy in [a, b]
     let mut a = BYTES_NUMBER;
     let mut b = points.len() - 1;
+    let mut mid = (a + b) / 2;
+    // at all times the grid must be set exactly for points [0..=mid]
+    for idx in &points[0..=mid] {
+        grid.set(*idx);
+    }
     while a < b {
-        let mid = (a + b) / 2;
-        grid.clear();
-        for (x, y) in &points[0..=mid] {
-            grid.set(LENGTH * y + x);
-        }
         if shortest_path(&grid) == usize::MAX {
             b = mid;
+            mid = (a + b) / 2;
+            for idx in &points[mid + 1..=b] {
+                grid.reset(*idx);
+            }
         } else {
             a = mid + 1;
+            mid = (a + b) / 2;
+            for idx in &points[a..=mid] {
+                grid.set(*idx);
+            }
         }
     }
-    format!("{},{}", points[a].0, points[a].1)
+    format!("{},{}", points[a] % LENGTH, points[a] / LENGTH)
 }
 
 #[cfg(test)]

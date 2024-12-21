@@ -1,6 +1,6 @@
-use std::cmp::Reverse;
+use std::collections::VecDeque;
 use std::time::Instant;
-use std::{collections::BinaryHeap, env::args};
+use std::env::args;
 
 use aoc::enizor::bitset::ArrayBitSet;
 use aoc::enizor::grid::{GridUtils, Position, ALL_DIRECTIONS};
@@ -52,9 +52,9 @@ fn shortest_path<const N: usize>(grid: &ArrayBitSet<N>) -> usize {
         length: LENGTH,
     };
     let mut visited = ArrayBitSet::<N>::new();
-    let mut queue = BinaryHeap::new();
-    queue.push(Reverse((0, START)));
-    while let Some(Reverse((cost, pos))) = queue.pop() {
+    let mut queue = VecDeque::with_capacity(LENGTH*LENGTH);
+    queue.push_back((0, START));
+    while let Some((cost, pos)) = queue.pop_front() {
         if pos == END {
             return cost;
         }
@@ -71,7 +71,7 @@ fn shortest_path<const N: usize>(grid: &ArrayBitSet<N>) -> usize {
             if let Some(new_pos) = grid_utils.step(pos, dir) {
                 let new_cur = grid_utils.cur(new_pos);
                 if !visited.test(new_cur) && !grid.test(new_cur) {
-                    queue.push(Reverse((new_cost, new_pos)));
+                    queue.push_back((new_cost, new_pos));
                 }
             }
         }
