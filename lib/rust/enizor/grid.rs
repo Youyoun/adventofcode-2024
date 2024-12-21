@@ -123,15 +123,23 @@ impl<'a> StrGrid<'a> {
 
     #[inline(always)]
     pub fn step(&self, pos: Position, dir: Direction) -> Option<Position> {
-        self.grid_utils.step(pos, dir)
+        let mut pos2 = pos;
+        if self.step_mut(&mut pos2, dir) {
+            Some(pos2)
+        } else {
+            None
+        }
     }
 
     #[inline(always)]
     pub fn step_mut(&self, pos: &mut Position, dir: Direction) -> bool {
-        self.grid_utils.step_mut(pos, dir)
+        self.grid_utils.step_mut(pos, dir) && self.valid_pos(*pos)
     }
+
+    #[inline(always)]
     pub fn valid_pos(&self, pos: Position) -> bool {
-        self.grid_utils.valid_pos(pos)
+        pos.x < self.grid_utils.width-1
+        && pos.y < self.grid_utils.length
     }
 }
 
