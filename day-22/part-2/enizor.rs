@@ -1,8 +1,9 @@
 use std::collections::HashMap;
+use std::env::args;
 use std::time::Instant;
-use std::{collections::VecDeque, env::args};
 
-use aoc::enizor::parser::{self, Parser};
+use aoc::enizor::bitset::{bitset_size, VecBitSet};
+use aoc::enizor::parser::Parser;
 
 fn main() {
     let now = Instant::now();
@@ -54,7 +55,7 @@ fn run(input: &str) -> usize {
         p.skip_whitespace();
         let mut new_price;
         let mut new_chg;
-        let mut observed_seqs = HashMap::new();
+        let mut seen = VecBitSet::new(bitset_size(1 << 20));
         for r in 0..ROUNDS {
             n = round(n);
             new_price = n % 10;
@@ -62,13 +63,11 @@ fn run(input: &str) -> usize {
             sequence <<= 5;
             sequence |= new_chg;
             sequence &= SEQUENCE_MASK;
-            if r > 4 && !observed_seqs.contains_key(&sequence) {
-                observed_seqs.insert(sequence, new_price);
+            if r > 4 && !seen.test(sequence) {
+                seen.set(sequence);
+                *g_observed_seqs.entry(sequence).or_insert(0) += new_price;
             }
             price = new_price;
-        }
-        for (k, v) in observed_seqs {
-            *g_observed_seqs.entry(k).or_insert(0) += v;
         }
     }
     *g_observed_seqs.values().max().unwrap()
