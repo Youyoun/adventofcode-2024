@@ -33,12 +33,8 @@ fn id_to_computer(id: usize) -> [u8; 2] {
     res
 }
 
-fn start_with_t(id: usize) -> bool {
-    (id >> 5) & MASK == (b't' - b'a') as usize
-}
-
 fn pair_to_id(lhs: usize, rhs: usize) -> usize {
-    lhs * MAX_ID + rhs
+    lhs.min(rhs) * MAX_ID + lhs.max(rhs)
 }
 
 fn lan_to_string(lan: &[usize], res: &mut String) {
@@ -58,39 +54,52 @@ fn run(input: &str) -> String {
     let bytes = input.as_bytes();
     let mut cur = 0;
     let mut connections = ArrayBitSet::<{ bitset_size(MAX_PAIR) }>::new();
-    let mut computers = ArrayBitSet::<{ bitset_size(MAX_ID) }>::new();
+    let mut computers_set = ArrayBitSet::<{ bitset_size(MAX_ID) }>::new();
+    let mut computers = Vec::new();
     while cur + 4 < bytes.len() {
         let lhs = computer_to_id(&bytes[cur..cur + 2]);
         cur += 3;
         let rhs = computer_to_id(&bytes[cur..cur + 2]);
-        connections.set(pair_to_id(lhs.min(rhs), lhs.max(rhs)));
-        computers.set(lhs);
-        computers.set(rhs);
+        connections.set(pair_to_id(lhs, rhs));
+        if !computers_set.test(lhs) {
+            computers.push(lhs);
+            computers_set.set(lhs);
+        }
+        if !computers_set.test(rhs) {
+            computers.push(rhs);
+            computers_set.set(rhs);
+        }
         cur += 3;
     }
+    computers.sort_unstable();
     let mut res = String::new();
     let mut lan_len = 0;
-    for l in 0..MAX_ID {
-        if computers.test(l) {
-            let mut lan = vec![l];
-            for r in l + 1..MAX_ID {
-                if computers.test(r) {
-                    let mut in_lan = true;
-                    for c in &lan {
-                        if !connections.test(pair_to_id(*c, r)) {
-                            in_lan = false;
-                            break;
-                        }
-                    }
-                    if in_lan {
-                        lan.push(r);
-                    }
+    let mut seen_lan = ArrayBitSet::<{ bitset_size(MAX_ID) }>::new();
+    for (i, &l) in computers.iter().enumerate() {
+        if seen_lan.test(l) {
+            continue;
+        }
+        seen_lan.set(l);
+        let mut lan = vec![l];
+        for &r in &computers[i + 1..] {
+            if seen_lan.test(r) {
+                continue;
+            }
+            let mut in_lan = true;
+            for &c in &lan {
+                if !connections.test(pair_to_id(c, r)) {
+                    in_lan = false;
+                    break;
                 }
             }
-            if lan.len() > lan_len {
-                lan_to_string(&lan, &mut res);
-                lan_len = lan.len();
+            if in_lan {
+                seen_lan.set(r);
+                lan.push(r);
             }
+        }
+        if lan.len() > lan_len {
+            lan_to_string(&lan, &mut res);
+            lan_len = lan.len();
         }
     }
     res

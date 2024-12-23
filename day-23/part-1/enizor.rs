@@ -26,6 +26,7 @@ fn computer_to_id(computer: &[u8]) -> usize {
     ((computer[1] - b'a') as usize) + (((computer[0] - b'a') as usize) * 32)
 }
 
+#[allow(dead_code)]
 fn id_to_computer(id: usize) -> [u8; 2] {
     let mut res = [b'a'; 2];
     res[1] += (id & MASK) as u8;
@@ -33,100 +34,55 @@ fn id_to_computer(id: usize) -> [u8; 2] {
     res
 }
 
-fn start_with_t(id: usize) -> bool {
+fn starts_with_t(id: usize) -> bool {
     (id >> 5) & MASK == (b't' - b'a') as usize
 }
 
 fn pair_to_id(lhs: usize, rhs: usize) -> usize {
-    lhs * MAX_ID + rhs
+    lhs.min(rhs) * MAX_ID + lhs.max(rhs)
 }
 
 fn run(input: &str) -> usize {
     let bytes = input.as_bytes();
     let mut cur = 0;
     let mut connections = ArrayBitSet::<{ bitset_size(MAX_PAIR) }>::new();
-    let mut computers = ArrayBitSet::<{ bitset_size(MAX_ID) }>::new();
+    let mut not_chiefs_set = ArrayBitSet::<{ bitset_size(MAX_ID) }>::new();
+    let mut not_chiefs = Vec::new();
+    let mut chiefs_set = ArrayBitSet::<{ bitset_size(MAX_ID) }>::new();
+    let mut chiefs = Vec::new();
     while cur + 4 < bytes.len() {
         let lhs = computer_to_id(&bytes[cur..cur + 2]);
         cur += 3;
         let rhs = computer_to_id(&bytes[cur..cur + 2]);
-        connections.set(pair_to_id(lhs.min(rhs), lhs.max(rhs)));
-        computers.set(lhs);
-        computers.set(rhs);
+        connections.set(pair_to_id(lhs, rhs));
+        if !not_chiefs_set.test(lhs) {
+            not_chiefs.push(lhs);
+            not_chiefs_set.set(lhs);
+        }
+        if starts_with_t(lhs) && !chiefs_set.test(lhs) {
+            chiefs.push(lhs);
+            chiefs_set.set(lhs);
+        }
+        if !not_chiefs_set.test(rhs) {
+            not_chiefs.push(rhs);
+            not_chiefs_set.set(rhs);
+        }
+        if starts_with_t(rhs) && !chiefs_set.test(rhs) {
+            chiefs.push(rhs);
+            chiefs_set.set(rhs);
+        }
         cur += 3;
     }
     let mut res = 0;
-    for l in 0..MAX_ID {
-        if computers.test(l) {
-            for r in l + 1..MAX_ID {
-                if computers.test(r) && connections.test(pair_to_id(l, r)) {
-                    for t in r + 1..MAX_ID {
-                        if computers.test(t)
-                            && connections.test(pair_to_id(r, t))
-                            && connections.test(pair_to_id(l, t))
-                            && (start_with_t(l) || start_with_t(r) || start_with_t(t))
-                        {
-                            // eprintln!(
-                            //     "{}-{}-{}",
-                            //     core::str::from_utf8(&id_to_computer(l)).unwrap(),
-                            //     core::str::from_utf8(&id_to_computer(r)).unwrap(),
-                            //     core::str::from_utf8(&id_to_computer(t)).unwrap()
-                            // );
-                            let ids = [l, r, t];
-                            let com: [_; 3] = core::array::from_fn(|i| id_to_computer(ids[i]));
-                            let con: [_; 3] =
-                                core::array::from_fn(|i| core::str::from_utf8(&com[i]).unwrap());
-                            let c1 = [
-                                format!("{}-{}", con[0], con[1]),
-                                format!("{}-{}", con[1], con[0]),
-                            ];
-                            assert!((start_with_t(l) || start_with_t(r) || start_with_t(t)));
-                            assert!(l < r);
-                            assert!(r < t);
-                            assert!(l < t);
-                            assert!(connections.test(pair_to_id(l, r)));
-                            assert!(connections.test(pair_to_id(r, t)));
-                            assert!(connections.test(pair_to_id(l, t)));
-                            assert!(
-                                input.contains(&c1[0]) || input.contains(&c1[1]),
-                                "fail 1 for {} {} {} = {} {} {}",
-                                con[0],
-                                con[1],
-                                con[2],
-                                ids[0],
-                                ids[1],
-                                ids[2]
-                            );
-                            let c2 = [
-                                format!("{}-{}", con[1], con[2]),
-                                format!("{}-{}", con[2], con[1]),
-                            ];
-                            assert!(
-                                input.contains(&c2[0]) || input.contains(&c2[1]),
-                                "fail 2 for {} {} {} = {} {} {}",
-                                con[0],
-                                con[1],
-                                con[2],
-                                ids[0],
-                                ids[1],
-                                ids[2]
-                            );
-                            let c3 = [
-                                format!("{}-{}", con[0], con[2]),
-                                format!("{}-{}", con[2], con[0]),
-                            ];
-                            assert!(
-                                input.contains(&c3[0]) || input.contains(&c3[1]),
-                                "fail 3 for {} {} {} = {} {} {}",
-                                con[0],
-                                con[1],
-                                con[2],
-                                ids[0],
-                                ids[1],
-                                ids[2]
-                            );
-                            res += 1;
-                        }
+    for c in chiefs {
+        for (i, &l) in not_chiefs.iter().enumerate() {
+            if (!starts_with_t(l) || l > c) && connections.test(pair_to_id(c, l)) {
+                for &r in &not_chiefs[i + 1..] {
+                    if (!starts_with_t(r) || r > c)
+                        && connections.test(pair_to_id(c, r))
+                        && connections.test(pair_to_id(l, r))
+                    {
+                        res += 1;
                     }
                 }
             }
