@@ -30,6 +30,14 @@ fn run(input: &str) -> usize {
     queue.push(Reverse((0, grid.from_cur(start_cur), Right)));
     queue.push(Reverse((2 * TURN_COST, grid.from_cur(start_cur), Left)));
     while let Some(Reverse((cost, pos, mut dir))) = queue.pop() {
+        let cur = grid.cur(pos);
+        if visited.test(cur*4+dir as usize) {
+            continue;
+        }
+        visited.set(cur*4+dir as usize);
+        if grid.data[cur] == b'E' {
+            return cost;
+        }
         dir.turn_indirect();
         for i in 0..3 {
             let new_cost = if i != 1 {
@@ -42,17 +50,17 @@ fn run(input: &str) -> usize {
                 if !visited.test(new_cur * 4 + dir as usize) {
                     match grid.data[new_cur] {
                         b'#' | b'S' => {}
-                        b'E' => return new_cost,
-                        b'.' => {
-                            queue.push(Reverse((new_cost, new_pos, dir)));
-                        }
+                        b'E' | b'.' => {
+                            if !visited.test(new_cur*4+dir as usize) {
+                                queue.push(Reverse((new_cost, new_pos, dir)));
+                            }
+                        },
                         _ => panic!("unexpected input at {}", new_cur),
                     }
                 }
             }
             dir.turn_direct();
         }
-        visited.set(grid.cur(pos) * 4 + dir as usize);
     }
 
     0
