@@ -2,6 +2,7 @@ use std::cmp::Reverse;
 use std::time::Instant;
 use std::{collections::BinaryHeap, env::args};
 
+use aoc::enizor::bitset::{bitset_size, VecBitSet};
 use aoc::enizor::grid::{Direction::*, StrGrid};
 
 fn main() {
@@ -24,7 +25,7 @@ fn run(input: &str) -> usize {
         .find(|(_i, b)| **b == b'S')
         .expect("failed to find start point!")
         .0;
-    let mut visited = vec![false; input.len()];
+    let mut visited = VecBitSet::new(bitset_size(input.len() * 4));
     let mut queue = BinaryHeap::new();
     queue.push(Reverse((0, grid.from_cur(start_cur), Right)));
     queue.push(Reverse((2 * TURN_COST, grid.from_cur(start_cur), Left)));
@@ -38,7 +39,7 @@ fn run(input: &str) -> usize {
             };
             if let Some(new_pos) = grid.step(pos, dir) {
                 let new_cur = grid.cur(new_pos);
-                if !visited[new_cur] {
+                if !visited.test(new_cur * 4 + dir as usize) {
                     match grid.data[new_cur] {
                         b'#' | b'S' => {}
                         b'E' => return new_cost,
@@ -51,7 +52,7 @@ fn run(input: &str) -> usize {
             }
             dir.turn_direct();
         }
-        visited[grid.cur(pos)] = true;
+        visited.set(grid.cur(pos) * 4 + dir as usize);
     }
 
     0
