@@ -3,7 +3,7 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
-const Direction = enum {
+const Direction = enum(u2) {
     North,
     East,
     South,
@@ -49,9 +49,25 @@ fn Grid(comptime T: type) type {
         }
     };
 }
-const BoolGrid = Grid(bool);
 const RoomGrid = Grid(u8);
-const DistGrid = Grid(usize);
+
+fn GridWithDir(comptime T: type) type {
+    return struct {
+        array: []T,
+        row_length: usize,
+
+        const Self = @This();
+        fn get(self: Self, pos: Position) T {
+            return self.array[pos.i + pos.j * self.row_length + @intFromEnum(pos.dir) * self.row_length * self.row_length];
+        }
+
+        fn set(self: Self, pos: Position, val: T) void {
+            self.array[pos.i + pos.j * self.row_length + @intFromEnum(pos.dir) * self.row_length * self.row_length] = val;
+        }
+    };
+}
+const DistGrid = GridWithDir(usize);
+const BoolGrid = GridWithDir(bool);
 
 const Position = struct {
     i: usize,
@@ -90,14 +106,14 @@ fn run(input: [:0]const u8) i64 {
     const initial_pos = Position{ .i = index % row_length, .j = index / row_length, .dir = Direction.East };
     var pos_list = std.ArrayList(Position).init(allocator);
     pos_list.append(initial_pos) catch unreachable;
-    var dist_array = DistGrid{ .array = allocator.alloc(usize, row_length * row_length) catch unreachable, .row_length = row_length };
+    var dist_array = DistGrid{ .array = allocator.alloc(usize, row_length * row_length * 4) catch unreachable, .row_length = row_length };
     @memset(dist_array.array, 1000000);
-    var checked_array = BoolGrid{ .array = allocator.alloc(bool, row_length * row_length) catch unreachable, .row_length = row_length };
+    var checked_array = BoolGrid{ .array = allocator.alloc(bool, row_length * row_length * 4) catch unreachable, .row_length = row_length };
     @memset(checked_array.array, false);
     dist_array.set(initial_pos, 0);
     while (pos_list.items.len != 0) {
         var min_i: usize = 0;
-        var current_min: usize = 1000000;
+        var current_min: usize = 10000000;
         for (0..pos_list.items.len, pos_list.items) |k, pos| {
             const dist = dist_array.get(pos);
             if (dist < current_min) {
