@@ -52,7 +52,13 @@ fn run(input: &str) -> u32 {
         if cost > max_cost {
             break;
         }
-        bitsets[bitset_id].set(grid.cur(pos));
+        let cur = grid.cur(pos);
+        if grid.data[cur] == b'E' {
+            max_cost = cost;
+            good_positions |= &bitsets[bitset_id];
+            continue;
+        }
+        bitsets[bitset_id].set(cur);
         dir.turn_indirect();
         let mut need_clone = false;
         for i in 0..3 {
@@ -67,11 +73,7 @@ fn run(input: &str) -> u32 {
                 if *map_cost > new_cost {
                     match grid.data[new_cur] {
                         b'#' | b'S' => {}
-                        b'E' => {
-                            max_cost = new_cost;
-                            good_positions |= &bitsets[bitset_id];
-                        }
-                        b'.' => {
+                        b'E' | b'.' => {
                             let new_id = if need_clone {
                                 bitsets.push(bitsets[bitset_id].clone());
                                 bitsets.len() - 1
