@@ -43,6 +43,8 @@ class YouyounSubmission(SubmissionPy):
         """
         map_, pos, n, m = init_problem(s)
         visited, is_loop = get_visited_places(map_, pos, n, m, direction=(-1, 0))
+        if pos in visited:
+            visited.pop(pos)
         loop_counts = 0
         for possible_pos in visited:
             _, is_loop = get_visited_places(map_ | {possible_pos}, pos, n, m, (-1,0))
