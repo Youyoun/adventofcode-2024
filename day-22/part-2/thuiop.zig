@@ -1,7 +1,7 @@
 const std = @import("std");
 
 var a: std.mem.Allocator = undefined;
-const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
+const stdout = std.io.getStdOut().writer();
 
 fn next_secret(secret: usize) usize {
     var temp: usize = ((secret * 64) ^ secret) % 16777216;
