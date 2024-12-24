@@ -16,13 +16,11 @@ def init_problem(s):
 
 def get_visited_places(map_, pos, direction, n, m):
     visited = {pos}
-    is_out = False
-    while not is_out:
+    while True:
         if direction == 0:
             i = next(i for i in range(pos[0]-1, -2, -1) if (i, pos[1]) in map_ or i==-1)
             visited.update({(i, pos[1]) for i in range(i+1, pos[0])})
             if i == -1:
-                is_out=True
                 break
             pos = (i+1, pos[1])
             direction = 1
@@ -30,7 +28,6 @@ def get_visited_places(map_, pos, direction, n, m):
             j = next(j for j in range(pos[1] + 1, m+1) if (pos[0], j) in map_ or j==m)
             visited.update({(pos[0], j) for j in range(pos[1]+1, j)})
             if j == m:
-                is_out = True
                 break
             pos = (pos[0], j-1)
             direction = 2
@@ -38,7 +35,6 @@ def get_visited_places(map_, pos, direction, n, m):
             i = next(i for i in range(pos[0] + 1, n+1) if (i, pos[1]) in map_ or i==n)
             visited.update({(i, pos[1]) for i in range(pos[0]+1, i)})
             if i == n:
-                is_out = True
                 break
             pos = (i-1, pos[1])
             direction=3
@@ -46,7 +42,6 @@ def get_visited_places(map_, pos, direction, n, m):
             j = next(j for j in range(pos[1]-1, -2, -1) if (pos[0], j) in map_ or j==-1)
             visited.update({(pos[0], j) for j in range(j+1, pos[1])})
             if j == -1:
-                is_out = True
                 break
             pos = (pos[0], j+1)
             direction = 0
