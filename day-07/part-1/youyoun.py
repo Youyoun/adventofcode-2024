@@ -1,6 +1,3 @@
-import itertools
-import operator
-
 from tool.runners.python import SubmissionPy
 
 def parse_equation(eq_str):
@@ -15,19 +12,23 @@ class YouyounSubmission(SubmissionPy):
         :param s: input in string format
         :return: solution flag
         """
-        _OPS = [operator.add, operator.mul]
         total_calibration_result = 0
         for eq in s.splitlines():
             test_value, numbers = parse_equation(eq)
-            len_ops = len(numbers) - 1
-            for ops_combo in itertools.product(_OPS, repeat=len_ops):
-                s = numbers[0]
-                for i, op in enumerate(ops_combo):
-                    s = op(s, numbers[i+1])
-                if s == test_value:
-                    total_calibration_result += s
-                    break
+            if is_possible(numbers, test_value):
+                total_calibration_result += test_value
         return total_calibration_result
+
+def is_possible(numbers: list[int], test_value):
+    if len(numbers) == 2:
+        return (sum(numbers) == test_value) or (numbers[0] * numbers[1] == test_value)
+    sub_path = False
+    mul_path = False
+    if test_value >= numbers[-1]:
+        sub_path = is_possible(numbers[:-1], test_value - numbers[-1])
+        if test_value % numbers[-1] == 0:
+            mul_path = is_possible(numbers[:-1], test_value // numbers[-1])
+    return sub_path or mul_path
 
 
 def test_youyoun():
