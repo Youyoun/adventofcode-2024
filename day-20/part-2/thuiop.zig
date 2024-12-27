@@ -3,6 +3,8 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
+const CHEAT_LENGTH: i64 = 20;
+
 const Direction = enum(u2) {
     North,
     East,
@@ -67,6 +69,10 @@ const Position = struct {
     }
 };
 
+fn abs(x: i64) i64 {
+    return if (x < 0) -x else x;
+}
+
 fn get_length(pos: Position, room: RoomGrid, results: *Grid(?i64)) ?i64 {
     if (room.get(pos) == "E"[0]) {
         results.set(pos, 0);
@@ -119,14 +125,17 @@ fn run(input: [:0]const u8) i64 {
         const i_1 = @mod(k, row_length_s);
         const j_1 = @divTrunc(k, row_length_s);
         const res1 = results.array[@as(usize, @intCast(i_1 + row_length_s * j_1))] orelse continue;
-        var l: i64 = 0;
-        while (l < row_length_s * row_length_s) : (l += 1) {
-            const i_2 = @mod(l, row_length_s);
-            const j_2 = @divTrunc(l, row_length_s);
-            const res2 = results.array[@as(usize, @intCast(i_2 + row_length_s * j_2))] orelse continue;
-            const dist: i64 = @intCast(@abs(i_2 - i_1) + @abs(j_2 - j_1));
-            if (dist <= 20 and res2 - (res1 + dist) >= 100) {
-                n_cheats += 1;
+        var i_2: i64 = -CHEAT_LENGTH;
+        while (i_2 <= CHEAT_LENGTH) : (i_2 += 1) {
+            var j_2: i64 = -(CHEAT_LENGTH - abs(i_2));
+            while (j_2 <= (CHEAT_LENGTH - abs(i_2))) : (j_2 += 1) {
+                if (i_1 + i_2 < row_length and i_1 + i_2 > 0 and j_1 + j_2 < row_length and j_1 + j_2 > 0) {
+                    const res2 = results.array[@as(usize, @intCast(i_1 + i_2 + row_length_s * (j_1 + j_2)))] orelse continue;
+                    const dist: i64 = abs(i_2) + abs(j_2);
+                    if (res2 - (res1 + dist) >= 100) {
+                        n_cheats += 1;
+                    }
+                }
             }
         }
     }
