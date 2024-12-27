@@ -3,6 +3,8 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
+const CHEAT_LENGTH: i64 = 2;
+
 const Direction = enum(u2) {
     North,
     East,
@@ -67,6 +69,10 @@ const Position = struct {
     }
 };
 
+fn abs(x: i64) i64 {
+    return if (x < 0) -x else x;
+}
+
 fn get_length(pos: Position, room: RoomGrid, results: *Grid(?i64)) ?i64 {
     if (room.get(pos) == "E"[0]) {
         results.set(pos, 0);
@@ -89,33 +95,6 @@ fn get_length(pos: Position, room: RoomGrid, results: *Grid(?i64)) ?i64 {
     return null;
 }
 
-fn find_cheats(pos: Position, room: RoomGrid, results: *Grid(?i64)) i64 {
-    if (room.get(pos) == "E"[0]) {
-        return 0;
-    }
-    const ref_time = results.get(pos).?;
-    const possible_next: [3]Direction = .{ pos.dir, clockwise(pos.dir), counterclockwise(pos.dir) };
-    var result: i64 = 0;
-    var position_to_try: ?Position = null;
-    for (possible_next) |next_dir| {
-        const next_pos = pos.next(next_dir, room.row_length) orelse continue;
-        if (room.get(next_pos) == "#"[0]) {
-            const next_next_pos = next_pos.next(next_dir, room.row_length) orelse continue;
-            if (results.get(next_next_pos)) |new_time| {
-                if (ref_time - (new_time + 2) >= 100) {
-                    result += 1;
-                }
-            }
-        } else {
-            position_to_try = next_pos;
-        }
-    }
-    if (position_to_try) |next_pos| {
-        result += find_cheats(next_pos, room, results);
-    }
-    return result;
-}
-
 fn run(input: [:0]const u8) i64 {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator); // create memory allocator for strings
     const allocator = arena.allocator();
@@ -133,18 +112,35 @@ fn run(input: [:0]const u8) i64 {
         i += 1;
     }
     const index = std.mem.indexOf(u8, room_array.array, "S").?;
-    var initial_pos = Position{ .i = index % row_length, .j = index / row_length, .dir = Direction.East };
-    for ([4]Direction{ Direction.East, Direction.West, Direction.North, Direction.South }) |dir| {
-        if (room_array.get(initial_pos.next(dir, row_length).?) == "."[0]) {
-            initial_pos.dir = dir;
-            break;
-        }
-    }
+    const initial_pos = Position{ .i = index % row_length, .j = index / row_length, .dir = Direction.East };
     var results = Grid(?i64){ .array = allocator.alloc(?i64, row_length * row_length) catch unreachable, .row_length = row_length };
     @memset(results.array, null);
     _ = get_length(initial_pos, room_array, &results).?;
 
-    return find_cheats(initial_pos, room_array, &results);
+    var n_cheats: i64 = 0;
+
+    var k: i64 = 0;
+    const row_length_s: i64 = @intCast(row_length);
+    while (k < row_length_s * row_length_s) : (k += 1) {
+        const i_1 = @mod(k, row_length_s);
+        const j_1 = @divTrunc(k, row_length_s);
+        const res1 = results.array[@as(usize, @intCast(i_1 + row_length_s * j_1))] orelse continue;
+        var i_2: i64 = -CHEAT_LENGTH;
+        while (i_2 <= CHEAT_LENGTH) : (i_2 += 1) {
+            var j_2: i64 = -(CHEAT_LENGTH - abs(i_2));
+            while (j_2 <= (CHEAT_LENGTH - abs(i_2))) : (j_2 += 1) {
+                if (i_1 + i_2 < row_length and i_1 + i_2 > 0 and j_1 + j_2 < row_length and j_1 + j_2 > 0) {
+                    const res2 = results.array[@as(usize, @intCast(i_1 + i_2 + row_length_s * (j_1 + j_2)))] orelse continue;
+                    const dist: i64 = abs(i_2) + abs(j_2);
+                    if (res2 - (res1 + dist) >= 100) {
+                        n_cheats += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    return n_cheats;
 }
 
 pub fn main() !void {
