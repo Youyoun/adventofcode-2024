@@ -69,6 +69,7 @@ const Position = struct {
 
 fn get_length(pos: Position, room: RoomGrid, results: *Grid(?i64)) ?i64 {
     if (room.get(pos) == "E"[0]) {
+        results.set(pos, 0);
         return 0;
     }
     if (results.get(pos)) |res| {
@@ -93,15 +94,15 @@ fn find_cheats(pos: Position, room: RoomGrid, results: *Grid(?i64)) i64 {
         return 0;
     }
     const ref_time = results.get(pos).?;
-    const possible_next: [3]Direction = .{ clockwise(pos.dir), counterclockwise(pos.dir), pos.dir };
+    const possible_next: [3]Direction = .{ pos.dir, clockwise(pos.dir), counterclockwise(pos.dir) };
     var result: i64 = 0;
     var position_to_try: ?Position = null;
     for (possible_next) |next_dir| {
         const next_pos = pos.next(next_dir, room.row_length) orelse continue;
         if (room.get(next_pos) == "#"[0]) {
             const next_next_pos = next_pos.next(next_dir, room.row_length) orelse continue;
-            if (results.get(next_next_pos)) |length| {
-                if (ref_time - (length + 2) >= 100) {
+            if (results.get(next_next_pos)) |new_time| {
+                if (ref_time - (new_time + 2) >= 100) {
                     result += 1;
                 }
             }
@@ -143,7 +144,7 @@ fn run(input: [:0]const u8) i64 {
     @memset(results.array, null);
     _ = get_length(initial_pos, room_array, &results).?;
 
-    return find_cheats(initial_pos, room_array, &results) + 2;
+    return find_cheats(initial_pos, room_array, &results);
 }
 
 pub fn main() !void {
