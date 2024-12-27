@@ -1,40 +1,10 @@
 from tool.runners.python import SubmissionPy
 
-
-def decode(disk_map):
-    i = 0
-    decoded = []
-    while i < len(disk_map):
-        if i % 2 == 0:
-            decoded.extend([i // 2 for _ in range(int(disk_map[i]))])
-        else:
-            decoded.extend([-1 for _ in range(int(disk_map[i]))])
-        i+=1
-    return decoded
-
-def decoded_to_str(decoded):
-    return "".join(map(str, decoded)).replace("-1", ".")
-
-def find_empty_space_with_length(decoded, len_):
-    for i in range(len_, len(decoded)):
-        if sum(decoded[i-len_:i]) == -len_:
-            return i - len_
-    return None
-
-def move_blocks(decoded):
-    j = len(decoded)-1
-    while j >= 0:
-        while decoded[j] == -1:
-            j -= 1
-        span_j = j
-        while decoded[j] == decoded[span_j]:
-            span_j -= 1
-        file_len = j - span_j
-        i = find_empty_space_with_length(decoded, file_len)
-        if i is not None and i < j:
-            decoded[i:i+file_len], decoded[span_j+1:j+1] = decoded[span_j+1:j+1], decoded[i:i+file_len]
-        j = span_j
-    return decoded
+def decoded_to_str(decoded, ids):
+    str_ = ""
+    for i in range(len(decoded)):
+        str_ += "".join([str(ids[i]) for _ in range(decoded[i])])
+    return str_.replace("-1", ".")
 
 class YouyounSubmission(SubmissionPy):
     def run(self, s: str):
@@ -42,14 +12,40 @@ class YouyounSubmission(SubmissionPy):
         :param s: input in string format
         :return: solution flag
         """
-        decoded = decode(s.strip())
-        moved_blocks = move_blocks(decoded)
-        s = 0
-        for i in range(len(moved_blocks)):
-            if moved_blocks[i] == -1:
+        decoded = list(map(int, list(s.strip())))
+        ids = [i // 2 if i % 2 == 0 else -1 for i in range(len(decoded))]
+        j = len(decoded) - 1
+        while j > 0:
+            if j % 2 == 1:
+                j -= 1
                 continue
-            s += i * moved_blocks[i]
-        return s
+            span = decoded[j]  # File space
+            for i in range(len(decoded)):
+                if i % 2 == 0:
+                    continue
+                free_space = decoded[i]
+                if free_space >= span and i < j:
+                    file_id = ids[j]
+                    ids[j] = -1
+                    ids = ids[:i + 1] + [file_id, -1] + ids[i + 1:]
+                    decoded = decoded[:i] + [-1, decoded[j], free_space - span] + decoded[i + 1:]
+                    decoded[j+2] = -1
+                    decoded[j+1] = span + decoded[j+1]
+                    j+=1
+                    break
+            j -= 1
+        checksum = 0
+        j = 0
+        for i in range(len(decoded)):
+            if ids[i] == -1:
+                if decoded[i] == -1:
+                    continue
+                j += decoded[i]
+                continue
+            for k in range(j,j+decoded[i]):
+                checksum += ids[i] * k
+            j = j+decoded[i]
+        return checksum
 
 
 def test_youyoun():
@@ -62,17 +58,3 @@ def test_youyoun():
             )
             == 2858
     )
-
-
-def test_decode_easy():
-    assert decoded_to_str(decode("12345")) == "0..111....22222"
-
-
-def test_decode():
-    assert decoded_to_str(
-        decode("2333133121414131402")) == "00...111...2...333.44.5555.6666.777.888899"
-
-
-def test_move_blocks():
-    assert decoded_to_str(move_blocks(
-        decode("2333133121414131402"))) == "00992111777.44.333....5555.6666.....8888.."
