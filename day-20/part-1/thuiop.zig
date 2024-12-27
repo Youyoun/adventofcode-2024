@@ -88,28 +88,29 @@ fn get_length(pos: Position, room: RoomGrid, results: *Grid(?i64)) ?i64 {
     return null;
 }
 
-fn find_cheats(pos: Position, room: RoomGrid, ref_time: i64, results: *Grid(?i64)) i64 {
+fn find_cheats(pos: Position, room: RoomGrid, results: *Grid(?i64)) i64 {
     if (room.get(pos) == "E"[0]) {
         return 0;
     }
-    const possible_next: [3]?Position = .{ pos.next(clockwise(pos.dir), room.row_length), pos.next(counterclockwise(pos.dir), room.row_length), pos.next(pos.dir, room.row_length) };
+    const ref_time = results.get(pos).?;
+    const possible_next: [3]Direction = .{ clockwise(pos.dir), counterclockwise(pos.dir), pos.dir };
     var result: i64 = 0;
     var position_to_try: ?Position = null;
-    for (possible_next) |next_pos| {
-        if (next_pos) |next_pos_unwrap| {
-            if (room.get(next_pos_unwrap) == "#"[0]) {
-                if (get_length(next_pos_unwrap, room, results)) |length| {
-                    if (ref_time - (length + 1) >= 100) {
-                        result += 1;
-                    }
+    for (possible_next) |next_dir| {
+        const next_pos = pos.next(next_dir, room.row_length) orelse continue;
+        if (room.get(next_pos) == "#"[0]) {
+            const next_next_pos = next_pos.next(next_dir, room.row_length) orelse continue;
+            if (results.get(next_next_pos)) |length| {
+                if (ref_time - (length + 2) >= 100) {
+                    result += 1;
                 }
-            } else {
-                position_to_try = next_pos_unwrap;
             }
+        } else {
+            position_to_try = next_pos;
         }
     }
     if (position_to_try) |next_pos| {
-        result += find_cheats(next_pos, room, ref_time - 1, results);
+        result += find_cheats(next_pos, room, results);
     }
     return result;
 }
@@ -131,12 +132,18 @@ fn run(input: [:0]const u8) i64 {
         i += 1;
     }
     const index = std.mem.indexOf(u8, room_array.array, "S").?;
-    const initial_pos = Position{ .i = index % row_length, .j = index / row_length, .dir = Direction.East };
+    var initial_pos = Position{ .i = index % row_length, .j = index / row_length, .dir = Direction.East };
+    for ([4]Direction{ Direction.East, Direction.West, Direction.North, Direction.South }) |dir| {
+        if (room_array.get(initial_pos.next(dir, row_length).?) == "."[0]) {
+            initial_pos.dir = dir;
+            break;
+        }
+    }
     var results = Grid(?i64){ .array = allocator.alloc(?i64, row_length * row_length) catch unreachable, .row_length = row_length };
     @memset(results.array, null);
-    const ref_time: i64 = get_length(initial_pos, room_array, &results).?;
+    _ = get_length(initial_pos, room_array, &results).?;
 
-    return find_cheats(initial_pos, room_array, ref_time, &results);
+    return find_cheats(initial_pos, room_array, &results) + 2;
 }
 
 pub fn main() !void {
