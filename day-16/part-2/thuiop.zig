@@ -72,19 +72,32 @@ fn GridWithDir(comptime T: type) type {
 const DistGrid = GridWithDir(usize);
 const BoolGrid = GridWithDir(bool);
 
+const Turn = enum { Left, Right, Straight };
+
 const Position = struct {
     i: usize,
     j: usize,
     dir: Direction,
+    current_distance: usize = 0,
     prev_pos: ?*Position = null,
 
-    fn next(self: *Position, dir: Direction) *Position {
+    fn next(self: *Position, comptime turn: Turn) *Position {
         const new_pos = allocator.create(Position) catch unreachable;
+        const dir = switch (turn) {
+            .Left => counterclockwise(self.dir),
+            .Right => clockwise(self.dir),
+            .Straight => self.dir,
+        };
+        const cost = switch (turn) {
+            .Left => 1001,
+            .Right => 1001,
+            .Straight => 1,
+        };
         new_pos.* = switch (dir) {
-            Direction.East => Position{ .i = self.i + 1, .j = self.j, .dir = dir, .prev_pos = self },
-            Direction.West => Position{ .i = self.i - 1, .j = self.j, .dir = dir, .prev_pos = self },
-            Direction.South => Position{ .i = self.i, .j = self.j + 1, .dir = dir, .prev_pos = self },
-            Direction.North => Position{ .i = self.i, .j = self.j - 1, .dir = dir, .prev_pos = self },
+            Direction.East => Position{ .i = self.i + 1, .j = self.j, .dir = dir, .current_distance = self.current_distance + cost, .prev_pos = self },
+            Direction.West => Position{ .i = self.i - 1, .j = self.j, .dir = dir, .current_distance = self.current_distance + cost, .prev_pos = self },
+            Direction.South => Position{ .i = self.i, .j = self.j + 1, .dir = dir, .current_distance = self.current_distance + cost, .prev_pos = self },
+            Direction.North => Position{ .i = self.i, .j = self.j - 1, .dir = dir, .current_distance = self.current_distance + cost, .prev_pos = self },
         };
         return new_pos;
     }
@@ -142,7 +155,7 @@ fn run(input: [:0]const u8) i64 {
 
     while (pos_list.removeOrNull()) |min_pos| {
         const current_dist = dist_array.get(min_pos);
-        if (current_dist > shortest) {
+        if (current_dist > shortest or min_pos.current_distance > current_dist) {
             continue;
         }
         if (room_array.get(min_pos) == "E"[0]) {
@@ -151,10 +164,10 @@ fn run(input: [:0]const u8) i64 {
             continue;
         }
 
-        const next_positions = [3]*Position{ min_pos.next(min_pos.dir), min_pos.next(clockwise(min_pos.dir)), min_pos.next(counterclockwise(min_pos.dir)) };
-        for (next_positions, [3]usize{ 1, 1001, 1001 }) |next_pos, score| {
+        const next_positions = [3]*Position{ min_pos.next(.Left), min_pos.next(.Right), min_pos.next(.Straight) };
+        for (next_positions) |next_pos| {
             if (room_array.get(next_pos) != "#"[0]) {
-                const new_dist = current_dist + score;
+                const new_dist = next_pos.current_distance;
                 if (dist_array.get(next_pos) >= new_dist) {
                     dist_array.set(next_pos, new_dist);
                     pos_list.add(next_pos) catch unreachable;
