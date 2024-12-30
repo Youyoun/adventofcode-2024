@@ -113,6 +113,7 @@ fn run(input: [:0]const u8) i64 {
     var visited_grid = GridWithDir(bool){ .array = allocator.alloc(bool, row_length * row_length * 4) catch unreachable, .row_length = row_length };
     const new_visited_grid = GridWithDir(bool){ .array = allocator.alloc(bool, row_length * row_length * 4) catch unreachable, .row_length = row_length };
     var obstacle_tried_grid = Grid(bool){ .array = allocator.alloc(bool, row_length * row_length) catch unreachable, .row_length = row_length };
+    obstacle_tried_grid.set(pos, true);
     var new_obstacle_count: i64 = 0;
 
     while (pos.is_not_out(row_length)) {
