@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::env::args;
 use std::time::Instant;
 
@@ -45,9 +44,10 @@ fn round(mut n: usize) -> usize {
 
 const SEQUENCE_MASK: usize = 0xFFFFF;
 
-fn run(input: &str) -> usize {
+fn run(input: &str) -> u32 {
     let mut p = Parser::from_input(&input);
-    let mut g_observed_seqs = HashMap::new();
+    let mut seqs_vec = vec![0u32; MASK + 1];
+    let mut max = 0;
     while !p.eof() {
         let mut sequence = 0;
         let mut n = p.parse_usize().expect("failed to parse");
@@ -63,14 +63,15 @@ fn run(input: &str) -> usize {
             sequence <<= 5;
             sequence |= new_chg;
             sequence &= SEQUENCE_MASK;
-            if r > 4 && !seen.test(sequence) {
+            if r >= 4 && !seen.test(sequence) {
+                seqs_vec[sequence] += new_price as u32;
+                max = max.max(seqs_vec[sequence]);
                 seen.set(sequence);
-                *g_observed_seqs.entry(sequence).or_insert(0) += new_price;
             }
             price = new_price;
         }
     }
-    *g_observed_seqs.values().max().unwrap()
+    max
 }
 
 #[cfg(test)]
