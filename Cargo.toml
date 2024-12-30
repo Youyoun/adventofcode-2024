@@ -208,3 +208,7 @@ path = "./day-23/part-1/enizor.rs"
 [[bin]]
 name = "day-23-part-2-enizor"
 path = "./day-23/part-2/enizor.rs"
+
+[[bin]]
+name = "day-24-part-1-enizor"
+path = "./day-24/part-1/enizor.rs"
