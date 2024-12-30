@@ -63,7 +63,7 @@ fn run(input: &str) -> usize {
             sequence <<= 5;
             sequence |= new_chg;
             sequence &= SEQUENCE_MASK;
-            if r > 4 && !seen.test(sequence) {
+            if r >= 4 && !seen.test(sequence) {
                 seen.set(sequence);
                 *g_observed_seqs.entry(sequence).or_insert(0) += new_price;
             }
