@@ -21,7 +21,7 @@ fn is_tree(robot_array: []bool, height: usize, width: usize) bool {
         for (0..width - 1) |i| {
             if (robot_array[i + j * width] == true) {
                 count += 1;
-                if (count >= 8) {
+                if (count >= 10) {
                     return true;
                 }
             } else {
