@@ -9,17 +9,17 @@ fn main() {
     println!("{}", output);
 }
 
-type Id = u32;
+type Num = u32;
 
-const fn str_to_id(s: &[u8]) -> Id {
+const fn str_to_num(s: &[u8]) -> Num {
     let mut res = 0;
     let mut c = 0;
     while c < 3 {
         let b = s[c];
         res *= 36;
         res += match b {
-            b'0'..=b'9' => (b - b'0') as Id,
-            b'a'..=b'z' => (b - b'a') as Id + 10,
+            b'0'..=b'9' => (b - b'0') as Num,
+            b'a'..=b'z' => (b - b'a') as Num + 10,
             _ => panic!("invalid wire ID!"),
         };
         c += 1;
@@ -27,22 +27,8 @@ const fn str_to_id(s: &[u8]) -> Id {
     res
 }
 
-fn id_to_str(mut id: Id) -> String {
-    let mut res = vec![0; 3];
-    for i in 0..3 {
-        let c = id % 36;
-        res[2 - i] = match c {
-            26..36 => c as u8 + b'0',
-            0..26 => c as u8 + b'a' - 10,
-            _ => panic!("invalid id!"),
-        };
-        id /= 36;
-    }
-    String::from_utf8(res).unwrap()
-}
-
-const ID_SIZE: usize = std::mem::size_of::<Id>() * 8 - Id::leading_zeros(36 * 36 * 36) as usize;
-const MASK: u64 = (1 << ID_SIZE) - 1;
+const ID_SIZE: usize = 10;
+const MASK: u32 = (1 << ID_SIZE) - 1;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Op {
@@ -54,8 +40,8 @@ use Op::*;
 
 #[derive(Debug, Clone, Copy)]
 struct Gate {
-    lhs: Id,
-    rhs: Id,
+    lhs: u16,
+    rhs: u16,
     op: Op,
 }
 
@@ -68,30 +54,30 @@ enum Wire {
 
 // memory-efficient representation
 // First 2 bits: is in SET state, and the bool value
-// last 18+18+2=38 bits: lhs, rhs, op
+// last 10+10+2=22 bits: lhs, rhs, op
 #[derive(Debug, Clone, Copy, Default)]
 struct PackedWire {
-    packed: u64,
+    packed: u32,
 }
-const SET_BIT: u64 = 1 << 63;
-const SET_VALUE_BIT: u64 = 1 << 62;
+const SET_BIT: u32 = 1 << 31;
+const SET_VALUE_BIT: u32 = 1 << 30;
 
 impl Gate {
     #[inline(always)]
-    fn pack(&self) -> u64 {
+    fn pack(&self) -> u32 {
         let mut packed = 0;
         debug_assert!(self.lhs < 1 << ID_SIZE);
-        packed |= self.lhs as u64;
+        packed |= self.lhs as u32;
         packed <<= ID_SIZE;
         debug_assert!(self.rhs < 1 << ID_SIZE);
-        packed |= self.rhs as u64;
+        packed |= self.rhs as u32;
         packed <<= 2;
-        debug_assert!((self.op as u64) < 1 << 2);
-        packed |= self.op as u64;
+        debug_assert!((self.op as u32) < 1 << 2);
+        packed |= self.op as u32;
         packed
     }
     #[inline(always)]
-    fn unpack(mut packed: u64) -> Self {
+    fn unpack(mut packed: u32) -> Self {
         let op = match packed & 0x3 {
             1 => And,
             2 => Or,
@@ -99,9 +85,9 @@ impl Gate {
             _ => panic!("invalid packed value!"),
         };
         packed >>= 2;
-        let rhs = (packed & MASK) as Id;
+        let rhs = (packed & MASK) as u16;
         packed >>= ID_SIZE;
-        let lhs = (packed & MASK) as Id;
+        let lhs = (packed & MASK) as u16;
         Gate { lhs, rhs, op }
     }
 }
@@ -124,17 +110,17 @@ impl PackedWire {
     }
 }
 
-fn fill_grid(wires: &mut [PackedWire], id: Id) -> Option<bool> {
-    if wires[id as usize].packed == 0 {
+fn fill_grid(wires: &mut [PackedWire], id: u16) -> Option<bool> {
+    if id == u16::MAX || wires[id as usize].packed == 0 {
         None
     } else {
         match wires[id as usize].unpack() {
             Wire::Set(val) => Some(val),
             Wire::Gate(gate) => {
                 let l = fill_grid(wires, gate.lhs)
-                    .unwrap_or_else(|| panic!("failed to construct wire {}", id_to_str(gate.lhs)));
+                    .unwrap_or_else(|| panic!("failed to construct wire"));
                 let r = fill_grid(wires, gate.rhs)
-                    .unwrap_or_else(|| panic!("failed to construct wire {}", id_to_str(gate.rhs)));
+                    .unwrap_or_else(|| panic!("failed to construct wire"));
                 let val = match gate.op {
                     And => l & r,
                     Or => l | r,
@@ -150,14 +136,23 @@ fn fill_grid(wires: &mut [PackedWire], id: Id) -> Option<bool> {
 fn run(input: &str) -> isize {
     let bytes = input.as_bytes();
     let mut cur = 0;
-    let mut wires = vec![PackedWire::default(); 36 * 36 * 36];
+    let mut wires = vec![PackedWire::default(); 512];
+    let mut wire_ids = vec![u16::MAX; 36 * 36 * 36];
+    let mut max_id = 0;
     // setup inputs
     while cur < bytes.len() {
         if bytes[cur] == b'\n' {
             cur += 1;
             break;
         }
-        let id = str_to_id(&bytes[cur..cur + 3]);
+        let num = str_to_num(&bytes[cur..cur + 3]);
+        let id = if wire_ids[num as usize] < u16::MAX {
+            wire_ids[num as usize]
+        } else {
+            wire_ids[num as usize] = max_id;
+            max_id += 1;
+            max_id - 1
+        };
         debug_assert_eq!(bytes[cur + 3], b':');
         let val = bytes[cur + 5] == b'1';
         debug_assert!(val || bytes[cur + 5] == b'0');
@@ -166,7 +161,14 @@ fn run(input: &str) -> isize {
     }
     // setup gates
     while cur + 10 < bytes.len() {
-        let lhs = str_to_id(&bytes[cur..cur + 3]);
+        let lhs_num = str_to_num(&bytes[cur..cur + 3]);
+        let lhs = if wire_ids[lhs_num as usize] < u16::MAX {
+            wire_ids[lhs_num as usize]
+        } else {
+            wire_ids[lhs_num as usize] = max_id;
+            max_id += 1;
+            max_id - 1
+        };
         let op = match bytes[cur + 4] {
             b'A' => And,
             b'O' => Or,
@@ -177,27 +179,41 @@ fn run(input: &str) -> isize {
         if op != Or {
             cur += 1;
         }
-        let rhs = str_to_id(&bytes[cur..cur + 3]);
+        let rhs_num = str_to_num(&bytes[cur..cur + 3]);
+        let rhs = if wire_ids[rhs_num as usize] < u16::MAX {
+            wire_ids[rhs_num as usize]
+        } else {
+            wire_ids[rhs_num as usize] = max_id;
+            max_id += 1;
+            max_id - 1
+        };
         cur += 7;
-        let out = str_to_id(&bytes[cur..cur + 3]);
+        let out_num = str_to_num(&bytes[cur..cur + 3]);
+        let out = if wire_ids[out_num as usize] < u16::MAX {
+            wire_ids[out_num as usize]
+        } else {
+            wire_ids[out_num as usize] = max_id;
+            max_id += 1;
+            max_id - 1
+        };
         cur += 4;
         let gate = Gate { lhs, rhs, op };
         wires[out as usize].packed = gate.pack();
     }
-    let mut id = str_to_id(b"z00");
+    let mut num = str_to_num(b"z00");
     let mut shift = 0;
     let mut res = 0;
     for _ten in 0..=9 {
         for _unit in 0..=9 {
-            match fill_grid(&mut wires, id) {
+            match fill_grid(&mut wires, wire_ids[num as usize]) {
                 Some(true) => res |= 1 << shift,
                 Some(false) => {}
                 None => return res,
             }
             shift += 1;
-            id += 1;
+            num += 1;
         }
-        id += 26;
+        num += 26;
     }
     res
 }
