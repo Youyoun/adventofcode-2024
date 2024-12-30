@@ -3,6 +3,9 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
+var ar = std.heap.ArenaAllocator.init(std.heap.page_allocator); // create memory allocator for strings
+const allocator = ar.allocator();
+
 const Block = struct {
     index: usize,
     size: usize,
@@ -12,7 +15,7 @@ const Iterator = struct {
     array: *[]?u32,
     index: usize,
 
-    fn next(self: *Iterator) ?Block {
+    fn next(self: *Iterator) ?*Block {
         if (self.index >= self.array.len - 1) {
             return null;
         }
@@ -28,7 +31,9 @@ const Iterator = struct {
                 break;
             }
         }
-        const result = Block{ .index = self.index, .size = size };
+        var result = allocator.create(Block) catch unreachable;
+        result.index = self.index;
+        result.size = size;
         self.index += size;
         return result;
     }
@@ -66,7 +71,6 @@ const ReverseIterator = struct {
 };
 
 fn run(input: [:0]const u8) i64 {
-    const allocator = std.heap.page_allocator;
     var layout_list = std.ArrayList(?u32).init(allocator);
     var current_num: u32 = 0;
     for (0..input.len) |i| {
@@ -82,20 +86,24 @@ fn run(input: [:0]const u8) i64 {
     }
     var layout = layout_list.items;
     var it = Iterator{ .array = &layout, .index = 0 };
+    var free_block_list = std.ArrayList(*Block).init(allocator);
+    while (it.next()) |free_block| {
+        free_block_list.append(free_block) catch unreachable;
+    }
     var reverse_it = ReverseIterator{ .array = &layout, .index = layout.len - 1 };
     while (reverse_it.next()) |file_block| {
-        while (it.next()) |free_block| {
+        for (free_block_list.items) |free_block| {
             if (free_block.index >= file_block.index) {
                 break;
             }
             if (free_block.size >= file_block.size) {
-                for (0..file_block.size) |i| {
-                    layout[free_block.index + i] = layout[file_block.index - i];
-                    layout[file_block.index - i] = null;
-                }
+                @memcpy(layout[free_block.index .. free_block.index + file_block.size], layout[file_block.index - file_block.size + 1 .. file_block.index + 1]);
+                @memset(layout[file_block.index - file_block.size + 1 .. file_block.index + 1], null);
+                free_block.size -= file_block.size;
+                free_block.index += file_block.size;
+                break;
             }
         }
-        it.reset();
     }
 
     var checksum: i64 = 0;
