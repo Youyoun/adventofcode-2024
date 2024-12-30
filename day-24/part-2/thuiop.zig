@@ -33,16 +33,24 @@ fn check_registers(register_name: [3]u8, registers: std.AutoHashMap([3]u8, Regis
     switch (registers.get(register_name).?) {
         .bool => return,
         .regexpr => |expr| {
+            if ((std.mem.eql(u8, expr.input1[1..3], "00") and std.mem.eql(u8, expr.input2[1..3], "00"))) {
+                return;
+            }
             const new_expected_ops: []Operation = switch (expr.operation) {
                 .And => @constCast(&[2]Operation{ .Or, .Xor }),
                 .Or => @constCast(&[1]Operation{.And}),
-                .Xor => @constCast(&[3]Operation{ .And, .Or, .Xor }),
+                .Xor => @constCast(&[2]Operation{ .Or, .Xor }),
             };
             var ok: bool = false;
             for (expected_ops) |op| {
                 if (expr.operation == op) {
                     ok = true;
                 }
+            }
+            const cond_start_1 = expr.input1[0] == "x"[0] and expr.input2[0] == "y"[0];
+            const cond_start_2 = expr.input1[0] == "y"[0] and expr.input2[0] == "x"[0];
+            if (expr.operation == .Xor and !(cond_start_1 or cond_start_2 or register_name[0] == "z"[0])) {
+                ok = false;
             }
             if (!ok) {
                 registers_to_swap.put(register_name, true) catch unreachable;
