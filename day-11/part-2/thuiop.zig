@@ -3,20 +3,21 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 const n_iterations = 75;
+const MAX_STORED_VAL = 2025;
 
-fn recur(value: usize, remaining_iter: usize, results: *[n_iterations * 100]?i64) i64 {
+fn recur(value: usize, remaining_iter: usize, results: *[n_iterations * MAX_STORED_VAL]?usize) usize {
     if (remaining_iter == 0) {
         return 1;
     }
-    if (value < 100) {
-        if (results.*[value + (remaining_iter - 1) * 100]) |val| {
+    if (value < MAX_STORED_VAL) {
+        if (results.*[value + (remaining_iter - 1) * MAX_STORED_VAL]) |val| {
             return val;
         }
     }
     if (value == 0) {
         const result = recur(1, remaining_iter - 1, results);
-        if (value < 100) {
-            results.*[value + (remaining_iter - 1) * 100] = result;
+        if (value < MAX_STORED_VAL) {
+            results.*[value + (remaining_iter - 1) * MAX_STORED_VAL] = result;
         }
         return result;
     } else {
@@ -34,24 +35,24 @@ fn recur(value: usize, remaining_iter: usize, results: *[n_iterations * 100]?i64
             const first_part = value / half_pow;
             const second_part = value - first_part * half_pow;
             const result = recur(first_part, remaining_iter - 1, results) + recur(second_part, remaining_iter - 1, results);
-            if (value < 100) {
-                results.*[value + (remaining_iter - 1) * 100] = result;
+            if (value < MAX_STORED_VAL) {
+                results.*[value + (remaining_iter - 1) * MAX_STORED_VAL] = result;
             }
             return result;
         } else {
             const result = recur(value * 2024, remaining_iter - 1, results);
-            if (value < 100) {
-                results.*[value + (remaining_iter - 1) * 100] = result;
+            if (value < MAX_STORED_VAL) {
+                results.*[value + (remaining_iter - 1) * MAX_STORED_VAL] = result;
             }
             return result;
         }
     }
 }
 
-fn run(input: [:0]const u8) i64 {
+fn run(input: [:0]const u8) usize {
     var it = std.mem.splitScalar(u8, input, " "[0]);
-    var total: i64 = 0;
-    var results: [n_iterations * 100]?i64 = undefined;
+    var total: usize = 0;
+    var results: [n_iterations * MAX_STORED_VAL]?usize = undefined;
     @memset(&results, null);
     while (it.next()) |x| {
         total += recur(std.fmt.parseInt(usize, x, 10) catch unreachable, n_iterations, &results);
