@@ -3,21 +3,19 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
-fn is_possible(design: []const u8, patterns_it: std.mem.SplitIterator(u8, std.mem.DelimiterType.sequence), possible_array: *[]?i64) i64 {
+fn is_possible(design: []const u8, patterns_array: [][]const u8, possible_array: *[]?i64) i64 {
     if (design.len == 0) {
         return 1;
     } else if (possible_array.*[design.len - 1] != null) {
         return possible_array.*[design.len - 1].?;
     }
-    var new_patterns_it = patterns_it;
-    new_patterns_it.reset();
     var count_possible: i64 = 0;
-    while (new_patterns_it.next()) |pattern| {
+    for (patterns_array) |pattern| {
         if (pattern.len > design.len) {
             continue;
         }
         if (std.mem.eql(u8, design[0..pattern.len], pattern)) {
-            count_possible += is_possible(design[pattern.len..], patterns_it, possible_array);
+            count_possible += is_possible(design[pattern.len..], patterns_array, possible_array);
         }
     }
     possible_array.*[design.len - 1] = count_possible;
@@ -30,13 +28,17 @@ fn run(input: [:0]const u8) i64 {
 
     var it = std.mem.splitScalar(u8, input, "\n"[0]);
     const first_row = it.next().?;
-    const patterns_it = std.mem.splitSequence(u8, first_row, ", ");
+    var patterns_it = std.mem.splitSequence(u8, first_row, ", ");
+    var patterns_list = std.ArrayList([]const u8).init(allocator);
+    while (patterns_it.next()) |pattern| {
+        patterns_list.append(pattern) catch unreachable;
+    }
     _ = it.next();
     var count: i64 = 0;
     while (it.next()) |design| {
         var possible_array = allocator.alloc(?i64, design.len) catch unreachable;
         @memset(possible_array, null);
-        count += is_possible(design, patterns_it, &possible_array);
+        count += is_possible(design, patterns_list.items, &possible_array);
     }
     return count;
 }

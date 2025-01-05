@@ -3,20 +3,18 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
-fn is_possible(design: []const u8, patterns_it: std.mem.SplitIterator(u8, std.mem.DelimiterType.sequence), possible_array: *[]bool) bool {
+fn is_possible(design: []const u8, patterns_array: [][]const u8, possible_array: *[]bool) bool {
     if (design.len == 0) {
         return true;
     } else if (!possible_array.*[design.len - 1]) {
         return false;
     }
-    var new_patterns_it = patterns_it;
-    new_patterns_it.reset();
-    while (new_patterns_it.next()) |pattern| {
+    for (patterns_array) |pattern| {
         if (pattern.len > design.len) {
             continue;
         }
         if (std.mem.eql(u8, design[0..pattern.len], pattern)) {
-            if (is_possible(design[pattern.len..], new_patterns_it, possible_array)) {
+            if (is_possible(design[pattern.len..], patterns_array, possible_array)) {
                 return true;
             }
         }
@@ -31,13 +29,17 @@ fn run(input: [:0]const u8) i64 {
 
     var it = std.mem.splitScalar(u8, input, "\n"[0]);
     const first_row = it.next().?;
-    const patterns_it = std.mem.splitSequence(u8, first_row, ", ");
+    var patterns_it = std.mem.splitSequence(u8, first_row, ", ");
+    var patterns_list = std.ArrayList([]const u8).init(allocator);
+    while (patterns_it.next()) |pattern| {
+        patterns_list.append(pattern) catch unreachable;
+    }
     _ = it.next();
     var count: i64 = 0;
     while (it.next()) |design| {
         var possible_array = allocator.alloc(bool, design.len) catch unreachable;
         @memset(possible_array, true);
-        if (is_possible(design, patterns_it, &possible_array)) {
+        if (is_possible(design, patterns_list.items, &possible_array)) {
             count += 1;
         }
     }
