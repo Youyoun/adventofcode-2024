@@ -37,11 +37,11 @@ fn Grid(comptime T: type) type {
         row_length: usize,
 
         const Self = @This();
-        fn get(self: Self, pos: *Position) T {
+        fn get(self: Self, pos: Position) T {
             return self.array[pos.i + pos.j * self.row_length];
         }
 
-        fn set(self: Self, pos: *Position, val: T) void {
+        fn set(self: Self, pos: Position, val: T) void {
             self.array[pos.i + pos.j * self.row_length] = val;
         }
 
@@ -60,11 +60,11 @@ fn GridWithDir(comptime T: type) type {
         row_length: usize,
 
         const Self = @This();
-        fn get(self: Self, pos: *Position) T {
+        fn get(self: Self, pos: Position) T {
             return self.array[pos.i + pos.j * self.row_length + @intFromEnum(pos.dir) * self.row_length * self.row_length];
         }
 
-        fn set(self: Self, pos: *Position, val: T) void {
+        fn set(self: Self, pos: Position, val: T) void {
             self.array[pos.i + pos.j * self.row_length + @intFromEnum(pos.dir) * self.row_length * self.row_length] = val;
         }
     };
@@ -74,15 +74,23 @@ const BoolGrid = GridWithDir(bool);
 
 const Turn = enum { Left, Right, Straight };
 
+const PrevList = struct {
+    items: [3]Position,
+    len: usize = 0,
+
+    fn append(self: *PrevList, pos: Position) void {
+        self.items[self.len] = pos;
+        self.len += 1;
+    }
+};
+
 const Position = struct {
     i: usize,
     j: usize,
     dir: Direction,
     current_distance: usize = 0,
-    prev_pos: ?*Position = null,
 
-    fn next(self: *Position, comptime turn: Turn) *Position {
-        const new_pos = allocator.create(Position) catch unreachable;
+    fn next(self: Position, comptime turn: Turn) Position {
         const dir = switch (turn) {
             .Left => counterclockwise(self.dir),
             .Right => clockwise(self.dir),
@@ -93,34 +101,32 @@ const Position = struct {
             .Right => 1001,
             .Straight => 1,
         };
-        new_pos.* = switch (dir) {
-            Direction.East => Position{ .i = self.i + 1, .j = self.j, .dir = dir, .current_distance = self.current_distance + cost, .prev_pos = self },
-            Direction.West => Position{ .i = self.i - 1, .j = self.j, .dir = dir, .current_distance = self.current_distance + cost, .prev_pos = self },
-            Direction.South => Position{ .i = self.i, .j = self.j + 1, .dir = dir, .current_distance = self.current_distance + cost, .prev_pos = self },
-            Direction.North => Position{ .i = self.i, .j = self.j - 1, .dir = dir, .current_distance = self.current_distance + cost, .prev_pos = self },
+        return switch (dir) {
+            Direction.East => Position{ .i = self.i + 1, .j = self.j, .dir = dir, .current_distance = self.current_distance + cost },
+            Direction.West => Position{ .i = self.i - 1, .j = self.j, .dir = dir, .current_distance = self.current_distance + cost },
+            Direction.South => Position{ .i = self.i, .j = self.j + 1, .dir = dir, .current_distance = self.current_distance + cost },
+            Direction.North => Position{ .i = self.i, .j = self.j - 1, .dir = dir, .current_distance = self.current_distance + cost },
         };
-        return new_pos;
     }
 
-    fn unwind(self: *Position, bool_array: *Grid(bool)) i64 {
+    fn unwind(self: Position, bool_array: *Grid(bool), prev_grid: GridWithDir(*PrevList)) i64 {
         const unchecked = !bool_array.*.get(self);
         if (unchecked) {
-            bool_array.*.set(self, true);
+            bool_array.set(self, true);
         }
-        if (self.prev_pos == null) {
-            return @intFromBool(unchecked);
-        } else {
-            if (self.prev_pos.?.i == self.i and self.prev_pos.?.j == self.j) {
-                unreachable;
-            }
-            return @intFromBool(unchecked) + self.prev_pos.?.unwind(bool_array);
+        const prev_list = prev_grid.get(self);
+        var value: i64 = @intFromBool(unchecked);
+        for (prev_list.items[0..prev_list.len]) |prev_pos| {
+            value += prev_pos.unwind(bool_array, prev_grid);
         }
+        return value;
     }
 };
 
-fn compare_distance(context: DistGrid, pos_1: *Position, pos_2: *Position) std.math.Order {
-    const dist_1 = context.get(pos_1);
-    const dist_2 = context.get(pos_2);
+fn compare_distance(context: void, pos_1: Position, pos_2: Position) std.math.Order {
+    _ = context;
+    const dist_1 = pos_1.current_distance;
+    const dist_2 = pos_2.current_distance;
     return std.math.order(dist_1, dist_2);
 }
 
@@ -139,19 +145,24 @@ fn run(input: [:0]const u8) i64 {
     }
 
     const index = std.mem.indexOf(u8, room_array.array, "S").?;
-    var initial_pos = Position{ .i = index % row_length, .j = index / row_length, .dir = Direction.East };
+    const initial_pos = Position{ .i = index % row_length, .j = index / row_length, .dir = Direction.East };
 
     var dist_array = DistGrid{ .array = allocator.alloc(usize, row_length * row_length * 4) catch unreachable, .row_length = row_length };
     @memset(dist_array.array, 1000000);
-    dist_array.set(&initial_pos, 0);
+    dist_array.set(initial_pos, 0);
 
-    var pos_list = std.PriorityQueue(*Position, DistGrid, compare_distance).init(allocator, dist_array);
-    pos_list.add(&initial_pos) catch unreachable;
+    var pos_list = std.PriorityQueue(Position, void, compare_distance).init(allocator, {});
+    pos_list.add(initial_pos) catch unreachable;
+
+    var prev_grid = GridWithDir(*PrevList){ .array = allocator.alloc(*PrevList, row_length * row_length * 4) catch unreachable, .row_length = row_length };
+    var prev_list_array = allocator.alloc(PrevList, row_length * row_length * 4) catch unreachable;
+    for (0..row_length * row_length * 4) |j| {
+        prev_list_array[j].len = 0;
+        prev_grid.array[j] = &prev_list_array[j];
+    }
 
     var shortest: usize = 10000000;
-    var good_pos_array = Grid(bool){ .array = allocator.alloc(bool, row_length * row_length) catch unreachable, .row_length = row_length };
-    @memset(good_pos_array.array, false);
-    var case_count: i64 = 0;
+    var end_pos: Position = undefined;
 
     while (pos_list.removeOrNull()) |min_pos| {
         const current_dist = dist_array.get(min_pos);
@@ -160,22 +171,40 @@ fn run(input: [:0]const u8) i64 {
         }
         if (room_array.get(min_pos) == "E"[0]) {
             shortest = current_dist;
-            case_count += min_pos.unwind(&good_pos_array);
+            end_pos = min_pos;
             continue;
         }
 
-        const next_positions = [3]*Position{ min_pos.next(.Left), min_pos.next(.Right), min_pos.next(.Straight) };
-        for (next_positions) |next_pos| {
+        inline for ([3]Turn{ .Straight, .Left, .Right }) |turn| {
+            const next_pos = min_pos.next(turn);
             if (room_array.get(next_pos) != "#"[0]) {
                 const new_dist = next_pos.current_distance;
-                if (dist_array.get(next_pos) >= new_dist) {
+                const old_dist = dist_array.get(next_pos);
+                if (old_dist >= new_dist) {
                     dist_array.set(next_pos, new_dist);
-                    pos_list.add(next_pos) catch unreachable;
+                    var prev_list = prev_grid.get(next_pos);
+                    if (old_dist > new_dist) {
+                        pos_list.add(next_pos) catch unreachable;
+                        prev_list.len = 0;
+                    }
+                    prev_list.append(min_pos);
                 }
             }
         }
     }
-    return case_count;
+    // for (0..row_length) |l| {
+    //     for (0..row_length) |k| {
+    //         if (good_pos_array.array[k + l * row_length]) {
+    //             room_array.array[k + l * row_length] = "O"[0];
+    //         }
+    //     }
+    // }
+    // for (0..row_length) |l| {
+    //     std.debug.print("{s}\n", .{room_array.array[l * row_length .. (l + 1) * row_length]});
+    // }
+    var good_pos_array = Grid(bool){ .array = allocator.alloc(bool, row_length * row_length) catch unreachable, .row_length = row_length };
+    @memset(good_pos_array.array, false);
+    return end_pos.unwind(&good_pos_array, prev_grid);
 }
 
 pub fn main() !void {
