@@ -3,48 +3,68 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
-fn concat(x: i64, y: i64) i64 {
-    var pow: i64 = 10;
+var number_list = [_]u64{0} ** 15;
+
+fn parseInt(comptime T: type, str: []const u8) T {
+    var result: T = 0;
+    for (str) |char| {
+        result *= 10;
+        result += char - 48;
+    }
+    return result;
+}
+
+fn truncate(x: u64, y: u64) ?u64 {
+    var pow: u64 = 10;
     while (pow <= y) {
         pow *= 10;
     }
-    return x * pow + y;
+    const diff = x - y;
+    const div = diff / pow;
+    if (diff - div * pow == 0) {
+        return div;
+    }
+    return null;
 }
 
-fn combine_recursive(number_list: []i64, total: i64, target: i64) bool {
-    if (number_list.len == 0) {
-        return total == target;
-    } else if (total > target) {
+fn combine_recursive(numbers: []u64, target: u64) bool {
+    if (numbers.len == 0) {
+        return target == 0;
+    } else if (target < numbers[0]) {
         return false;
     } else {
-        if (combine_recursive(number_list[1..], total * number_list[0], target)) {
+        if (combine_recursive(numbers[1..], target - numbers[0])) {
             return true;
         }
-        if (combine_recursive(number_list[1..], total + number_list[0], target)) {
-            return true;
+        const div = target / numbers[0];
+        if (target - div * numbers[0] == 0) {
+            if (combine_recursive(numbers[1..], div)) {
+                return true;
+            }
         }
-        if (combine_recursive(number_list[1..], concat(total, number_list[0]), target)) {
-            return true;
+        if (truncate(target, numbers[0])) |new_target| {
+            if (combine_recursive(numbers[1..], new_target)) {
+                return true;
+            }
         }
         return false;
     }
 }
 
-fn run(input: [:0]const u8) i64 {
-    const allocator = std.heap.page_allocator; // create memory allocator for strings
+fn run(input: [:0]const u8) u64 {
     var it = std.mem.splitScalar(u8, input, '\n');
-    var calibration_result: i64 = 0;
+    var calibration_result: u64 = 0;
+    var length: u16 = 0;
     while (it.next()) |line| {
+        length = 0;
         const result_end = std.mem.indexOf(u8, line, ":").?;
-        const result = std.fmt.parseInt(i64, line[0..result_end], 10) catch unreachable;
-        var number_list = std.ArrayList(i64).init(allocator);
-        var number_it = std.mem.splitScalar(u8, line[result_end + 2 ..], ' ');
-        var length: u16 = 0;
+        const result = parseInt(u64, line[0..result_end]);
+        var number_it = std.mem.splitBackwardsScalar(u8, line[result_end + 2 ..], ' ');
         while (number_it.next()) |num| {
-            number_list.append(std.fmt.parseInt(i64, num, 10) catch unreachable) catch unreachable;
+            number_list[length] = parseInt(u64, num);
             length += 1;
         }
-        if (combine_recursive(number_list.items[1..], number_list.items[0], result)) {
+        if (combine_recursive(number_list[0..length], result)) {
             calibration_result += result;
         }
     }
