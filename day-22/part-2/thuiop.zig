@@ -3,37 +3,45 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer();
 
-fn next_secret(secret: usize) usize {
-    var temp: usize = ((secret * 64) ^ secret) % 16777216;
-    temp = ((temp / 32) ^ temp) % 16777216;
-    temp = ((temp * 2048) ^ temp) % 16777216;
+var results: [1048576]u32 = [_]u32{0} ** 1048576;
+var is_done = std.bit_set.ArrayBitSet(usize, 1048576).initEmpty();
+
+pub const ShiftInt = std.math.Log2Int(usize);
+
+pub fn isSet(self: *std.bit_set.ArrayBitSet(usize, 1048576), index: usize) bool {
+    return (self.masks[index >> @bitSizeOf(ShiftInt)] & @as(usize, 1) << @as(ShiftInt, @truncate(index))) != 0;
+}
+
+pub fn set(self: *std.bit_set.ArrayBitSet(usize, 1048576), index: usize) void {
+    self.masks[index >> @bitSizeOf(ShiftInt)] |= @as(usize, 1) << @as(ShiftInt, @truncate(index));
+}
+
+fn next_secret(secret: u32) u32 {
+    var temp: u32 = ((secret << 6) ^ secret) % 16777216;
+    temp = ((temp >> 5) ^ temp) % 16777216;
+    temp = ((temp << 11) ^ temp) % 16777216;
     return temp;
 }
 
-fn run(input: [:0]const u8) usize {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    const allocator = arena.allocator();
-
+fn run(input: [:0]const u8) u32 {
     var it = std.mem.splitScalar(u8, input, "\n"[0]);
+    std.debug.print("{any}", .{is_done.masks.len});
 
-    var results = allocator.alloc(usize, 1048576) catch unreachable;
-    @memset(results, 0);
-    var is_done = allocator.alloc(bool, 1048576) catch unreachable;
     while (it.next()) |row| {
-        @memset(is_done, false);
-        var secret: usize = std.fmt.parseInt(usize, row, 10) catch unreachable;
+        @memset(&is_done.masks, 0);
+        var secret: u32 = std.fmt.parseInt(u32, row, 10) catch unreachable;
         var prev_price: i5 = @intCast(secret % 10);
         var last_4: u20 = 0;
-        var i: usize = 0;
+        var i: u32 = 0;
         for (0..2000) |_| {
             secret = next_secret(secret);
             const price: i5 = @intCast(secret % 10);
             const diff: i5 = price - prev_price;
             last_4 = (last_4 << 5) + @as(u5, @bitCast(diff));
             if (i >= 4) {
-                if (!is_done[last_4]) {
+                if (!isSet(&is_done, last_4)) {
                     results[last_4] += secret % 10;
-                    is_done[last_4] = true;
+                    set(&is_done, last_4);
                 }
             } else {
                 i += 1;
@@ -41,7 +49,7 @@ fn run(input: [:0]const u8) usize {
             prev_price = price;
         }
     }
-    return std.mem.max(usize, results);
+    return std.mem.max(u32, &results);
 }
 
 pub fn main() !void {
