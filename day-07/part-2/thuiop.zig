@@ -21,7 +21,7 @@ fn truncate(x: u64, y: u64) ?u64 {
     }
     const diff = x - y;
     const div = diff / pow;
-    if (diff - (div) * pow == 0) {
+    if (diff - div * pow == 0) {
         return div;
     }
     return null;
@@ -82,12 +82,9 @@ pub fn main() !void {
     const input: [:0]const u8 = arg_it.next().?;
 
     const start: i128 = std.time.nanoTimestamp(); // start time
-    for (0..100) |_| {
-        _ = run(input); // compute answer
-    }
-    const end: i128 = std.time.nanoTimestamp();
     const answer = run(input); // compute answer
+    const end: i128 = std.time.nanoTimestamp();
     const elapsed_nano: f64 = @floatFromInt(end - start);
-    const elapsed_milli = elapsed_nano / 1_000_000.0 / 100;
+    const elapsed_milli = elapsed_nano / 1_000_000.0;
     try stdout.print("_duration:{d}\n{}\n", .{ elapsed_milli, answer }); // emit actual lines parsed by AOC
 }
