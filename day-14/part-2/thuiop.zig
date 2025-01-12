@@ -3,7 +3,20 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
-const vector_len = std.simd.suggestVectorLength(bool).?;
+const width = 101;
+const height = 103;
+const bitset_type = std.bit_set.ArrayBitSet(u32, width * height);
+var robot_array = bitset_type.initEmpty();
+
+pub const ShiftInt = std.math.Log2Int(u32);
+
+pub fn isSet(self: *bitset_type, index: usize) bool {
+    return (self.masks[index >> @bitSizeOf(ShiftInt)] & @as(u32, 1) << @as(ShiftInt, @truncate(index))) != 0;
+}
+
+pub fn set(self: *bitset_type, index: usize) void {
+    self.masks[index >> @bitSizeOf(ShiftInt)] |= @as(u32, 1) << @as(ShiftInt, @truncate(index));
+}
 
 const Coeffs = struct {
     x: i16,
@@ -17,14 +30,10 @@ fn parse_coeffs(str: []const u8) Coeffs {
     return Coeffs{ .x = x, .y = y };
 }
 
-fn is_tree(robot_array: []bool, height: usize, width: usize) bool {
-    for (0..height - 1) |j| {
-        const row_offset = j * width;
-        for (0..width / vector_len - 1) |i| {
-            const h: @Vector(vector_len, bool) = robot_array[i * vector_len + row_offset ..][0..vector_len].*;
-            if (std.simd.countTrues(h) >= 20) {
-                return true;
-            }
+fn is_tree() bool {
+    for (robot_array.masks) |mask| {
+        if (@popCount(mask) >= 22) {
+            return true;
         }
     }
     return false;
@@ -32,35 +41,46 @@ fn is_tree(robot_array: []bool, height: usize, width: usize) bool {
 
 fn run(input: [:0]const u8) i64 {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator); // create memory allocator for strings
-    defer arena.deinit(); // clear memory
     const allocator = arena.allocator();
 
     var it = std.mem.splitScalar(u8, input, "\n"[0]);
-    const width = 101;
-    const height = 103;
-    var pos_list = std.ArrayList(Coeffs).init(allocator);
-    var vel_list = std.ArrayList(Coeffs).init(allocator);
+    var pos_x_list = std.ArrayList(i16).init(allocator);
+    var vel_x_list = std.ArrayList(i16).init(allocator);
+    var pos_y_list = std.ArrayList(i16).init(allocator);
+    var vel_y_list = std.ArrayList(i16).init(allocator);
     while (it.next()) |row| {
         var row_it = std.mem.splitScalar(u8, row, " "[0]);
-        pos_list.append(parse_coeffs(row_it.next().?)) catch unreachable;
-        vel_list.append(parse_coeffs(row_it.next().?)) catch unreachable;
+        const coeffs_pos = parse_coeffs(row_it.next().?);
+        const coeffs_vel = parse_coeffs(row_it.next().?);
+        pos_x_list.append(coeffs_pos.x) catch unreachable;
+        pos_y_list.append(coeffs_pos.y) catch unreachable;
+        vel_x_list.append(coeffs_vel.x) catch unreachable;
+        vel_y_list.append(coeffs_vel.y) catch unreachable;
     }
 
-    var i: i64 = 0;
-    var robot_array = [_]bool{false} ** (width * height);
+    const pos_x = pos_x_list.items;
+    const pos_y = pos_y_list.items;
+    const vel_x = vel_x_list.items;
+    const vel_y = vel_y_list.items;
+
+    var count: i64 = 0;
     while (true) {
-        for (pos_list.items, vel_list.items) |*pos, *vel| {
-            pos.x = @mod(pos.x + vel.x, width);
-            pos.y = @mod(pos.y + vel.y, height);
-            robot_array[@intCast(pos.x + pos.y * width)] = true;
+        for (0..pos_x.len) |i| {
+            pos_x[i] += vel_x[i];
+            pos_y[i] += vel_y[i];
+            pos_x[i] = @mod(pos_x[i], width);
+            pos_y[i] = @mod(pos_y[i], height);
         }
-        i += 1;
-        if (is_tree(&robot_array, height, width)) {
+        for (0..pos_x.len) |i| {
+            set(&robot_array, @intCast(pos_x[i] + pos_y[i] * width));
+        }
+        count += 1;
+        if (is_tree()) {
             break;
         }
-        @memset(&robot_array, false);
+        @memset(&robot_array.masks, 0);
     }
-    return i;
+    return count;
 }
 
 pub fn main() !void {
