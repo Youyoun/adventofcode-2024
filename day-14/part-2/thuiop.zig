@@ -3,6 +3,8 @@ const std = @import("std");
 var a: std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
+const vector_len = std.simd.suggestVectorLength(bool).?;
+
 const Coeffs = struct {
     x: i16,
     y: i16,
@@ -16,16 +18,12 @@ fn parse_coeffs(str: []const u8) Coeffs {
 }
 
 fn is_tree(robot_array: []bool, height: usize, width: usize) bool {
-    var count: usize = 0;
     for (0..height - 1) |j| {
-        for (0..width - 1) |i| {
-            if (robot_array[i + j * width] == true) {
-                count += 1;
-                if (count >= 10) {
-                    return true;
-                }
-            } else {
-                count = 0;
+        const row_offset = j * width;
+        for (0..width / vector_len - 1) |i| {
+            const h: @Vector(vector_len, bool) = robot_array[i * vector_len + row_offset ..][0..vector_len].*;
+            if (std.simd.countTrues(h) >= 20) {
+                return true;
             }
         }
     }
