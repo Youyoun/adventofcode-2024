@@ -9,7 +9,7 @@ inputs:
   nim-version:
     description: "Nim version"
     required: false
-    default: "2.0.0"
+    default: "2.2.4"
   clang-version:
     description: "Clang version"
     required: false
