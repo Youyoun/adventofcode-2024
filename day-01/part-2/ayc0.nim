@@ -11,14 +11,14 @@ proc run(s: var string): int =
     var lefts = newSeq[string](lines.len)
     lefts.setLen(0)
 
-    var rights = initTable[string, int]()
+    var rights = initCountTable[string]()
 
     for line in lines:
         let sepPos = line.find("   ")
         let leftStr = line[0 ..< sepPos]
         let rightStr = line[sepPos + 3 .. ^1]
         lefts.add(leftStr)
-        rights[rightStr] = rights.getOrDefault(rightStr) + 1
+        rights.inc(rightStr)
 
     var total = 0
 
