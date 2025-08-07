@@ -19,7 +19,7 @@ jobs:
       uses: ./.github/actions/setup
       with:
         python-version: "3.10"
-        nim-version: "2.0.0"
+        nim-version: "2.2.4"
         clang-version: "16"
         deno-version: "v2.x"
         zig-version: "0.13.0"
