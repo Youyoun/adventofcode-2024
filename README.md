@@ -52,10 +52,12 @@ aoc commands are:
 
 ### Installation
 
+This project runs using [`uv`](https://github.com/astral-sh/uv)
+
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+# Install deps
+uv sync
+
 # And now aoc can work
 ./aoc run
 ```
@@ -129,7 +131,7 @@ To participate, you'll have to create your own files containing your solutions (
 create them).
 
 You can add other functions & modules if you need to. Any external dependency should be added to the appropriate files
-(`requirements.txt`, `package.json`, and so on).
+(`pyproject.toml`, `package.json`, and so on).
 
 Once you tested your solution you can submit it by making a PR and a GitHub action will check that your code generates
 the same outputs as others' code.
