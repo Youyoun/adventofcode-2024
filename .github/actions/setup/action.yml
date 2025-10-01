@@ -40,6 +40,7 @@ runs:
     uses: astral-sh/setup-uv@v6
     with:
       version: "0.8.22"
+      enable-cache: true
 
   - name: deps-python
     run: uv sync --locked --all-extras --dev
