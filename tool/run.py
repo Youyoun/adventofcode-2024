@@ -20,12 +20,15 @@ from tool.leaderboard.leaderboard import generate_leaderboard
 class DifferentAnswersException(Exception):
     pass
 
-
 class UnexpectedDebugLinesException(Exception):
     pass
 
+
+class TooLongException(Exception):
+    pass
+
 def maxDurationHandler(signum, frame):
-    raise Exception("Too long")
+    raise TooLongException("Too long")
 
 signal.signal(signal.SIGALRM, maxDurationHandler)
 
@@ -80,7 +83,7 @@ def run(
                     previous = result
                 except (DifferentAnswersException, UnexpectedDebugLinesException) as e:
                     errors.append(f"{BColor.RED}ERROR: {e}{BColor.ENDC}")
-                except Exception:
+                except TooLongException:
                     errors.append(f"{BColor.RED}[{submission.author}] day-{submission.problem.day}/part-{submission.problem.part} ({submission.language}){BColor.ENDC}: Maximum of {max_duration}s reached (on input {BColor.BLUE}{input.author}{BColor.ENDC})")
 
         for submission in submissions:
