@@ -2,6 +2,7 @@
 
 import sys
 import time
+import signal
 from collections import defaultdict
 from typing import Mapping
 
@@ -19,9 +20,17 @@ from tool.leaderboard.leaderboard import generate_leaderboard
 class DifferentAnswersException(Exception):
     pass
 
-
 class UnexpectedDebugLinesException(Exception):
     pass
+
+
+class TooLongException(Exception):
+    pass
+
+def maxDurationHandler(signum, frame):
+    raise TooLongException("Submission ran for too long")
+
+signal.signal(signal.SIGALRM, maxDurationHandler)
 
 
 def run(
@@ -36,6 +45,7 @@ def run(
     restricted: bool,
     expand: bool,
     print_time_dist: bool,
+    timeout: int,
 ) -> None:
     problems = discovery.get_problems(days, parts, all_days_parts)
     printed_day_header: set[int] = set()
@@ -63,18 +73,22 @@ def run(
                 if restricted and input.author != submission.author.split(".")[0]:
                     continue
                 try:
+                    # Start timeout timer
+                    # if it's 0 (default, will be a no-op)
+                    signal.alarm(timeout)
                     result = run_submission(
                         problem, submission, input, previous, no_debug
                     )
+                    signal.alarm(0) # Stop the timer
                     results_by_author[submission.author].append(result)
                     results_by_input[input.author].append(result)
                     previous = result
                 except (DifferentAnswersException, UnexpectedDebugLinesException) as e:
-                    errors.append(
-                        f"{BColor.RED}ERROR: {e}{BColor.ENDC}".format(
-                            BColor.RED, e, BColor.ENDC
-                        )
-                    )
+                    errors.append(f"{BColor.RED}ERROR: {e}{BColor.ENDC}")
+                except TooLongException:
+                    errors.append(f"{BColor.RED}[{submission.author}] day-{submission.problem.day}/part-{submission.problem.part} ({submission.language}){BColor.ENDC}: Maximum of {timeout}s reached (on input {BColor.BLUE}{input.author}{BColor.ENDC})")
+                finally:
+                    signal.alarm(0) # Stop the timer just in case
 
         for submission in submissions:
             if submission.runnable is not None:
