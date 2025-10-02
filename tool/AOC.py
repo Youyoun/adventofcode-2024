@@ -100,6 +100,12 @@ aoc commands are:
             action="store_true",
             default=False,
         )
+        parser.add_argument(
+            "--max-duration",
+            help="max duration per script in seconds (default to 1s)",
+            default=1,
+            type=int
+        )
 
         args = parser.parse_args(argv)
 
@@ -115,6 +121,7 @@ aoc commands are:
             args.restricted,
             args.expand,
             args.times,
+            args.max_duration,
         )
 
     @staticmethod

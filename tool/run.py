@@ -17,19 +17,17 @@ from tool.utils import BColor
 from tool.leaderboard.leaderboard import generate_leaderboard
 
 
-def maxDurationHandler(signum, frame):
-    raise Exception("Maxiumum of 1s reached")
-
-signal.signal(signal.SIGALRM, maxDurationHandler)
-
-
-
 class DifferentAnswersException(Exception):
     pass
 
 
 class UnexpectedDebugLinesException(Exception):
     pass
+
+def maxDurationHandler(signum, frame):
+    raise Exception("Too long")
+
+signal.signal(signal.SIGALRM, maxDurationHandler)
 
 
 def run(
@@ -44,6 +42,7 @@ def run(
     restricted: bool,
     expand: bool,
     print_time_dist: bool,
+    max_duration: int,
 ) -> None:
     problems = discovery.get_problems(days, parts, all_days_parts)
     printed_day_header: set[int] = set()
@@ -71,7 +70,7 @@ def run(
                 if restricted and input.author != submission.author.split(".")[0]:
                     continue
                 try:
-                    signal.alarm(1) # Start the 1s timer
+                    signal.alarm(max_duration) # Start timeout timer
                     result = run_submission(
                         problem, submission, input, previous, no_debug
                     )
@@ -82,7 +81,7 @@ def run(
                 except (DifferentAnswersException, UnexpectedDebugLinesException) as e:
                     errors.append(f"{BColor.RED}ERROR: {e}{BColor.ENDC}")
                 except Exception:
-                    errors.append(f"{BColor.RED}[{submission.author}] day-{submission.problem.day}/part-{submission.problem.part} ({submission.language}){BColor.ENDC}: Maxiumum of 1s reached (on input {BColor.BLUE}{input.author}{BColor.ENDC})")
+                    errors.append(f"{BColor.RED}[{submission.author}] day-{submission.problem.day}/part-{submission.problem.part} ({submission.language}){BColor.ENDC}: Maximum of {max_duration}s reached (on input {BColor.BLUE}{input.author}{BColor.ENDC})")
 
         for submission in submissions:
             if submission.runnable is not None:
