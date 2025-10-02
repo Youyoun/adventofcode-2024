@@ -2,6 +2,7 @@
 
 import sys
 import time
+import signal
 from collections import defaultdict
 from typing import Mapping
 
@@ -14,6 +15,13 @@ from tool.model import Input, Problem, Result, Submission
 from tool.runners.wrapper import SubmissionWrapper
 from tool.utils import BColor
 from tool.leaderboard.leaderboard import generate_leaderboard
+
+
+def maxDurationHandler(signum, frame):
+    raise Exception("Maxiumum of 1s reached")
+
+signal.signal(signal.SIGALRM, maxDurationHandler)
+
 
 
 class DifferentAnswersException(Exception):
@@ -63,18 +71,18 @@ def run(
                 if restricted and input.author != submission.author.split(".")[0]:
                     continue
                 try:
+                    signal.alarm(1) # Start the 1s timer
                     result = run_submission(
                         problem, submission, input, previous, no_debug
                     )
+                    signal.alarm(0) # Stop the timer
                     results_by_author[submission.author].append(result)
                     results_by_input[input.author].append(result)
                     previous = result
                 except (DifferentAnswersException, UnexpectedDebugLinesException) as e:
-                    errors.append(
-                        f"{BColor.RED}ERROR: {e}{BColor.ENDC}".format(
-                            BColor.RED, e, BColor.ENDC
-                        )
-                    )
+                    errors.append(f"{BColor.RED}ERROR: {e}{BColor.ENDC}")
+                except Exception:
+                    errors.append(f"{BColor.RED}[{submission.author}] day-{submission.problem.day}/part-{submission.problem.part} ({submission.language}){BColor.ENDC}: Maxiumum of 1s reached (on input {BColor.BLUE}{input.author}{BColor.ENDC})")
 
         for submission in submissions:
             if submission.runnable is not None:
