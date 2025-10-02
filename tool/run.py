@@ -28,7 +28,7 @@ class TooLongException(Exception):
     pass
 
 def maxDurationHandler(signum, frame):
-    raise TooLongException("Too long")
+    raise TooLongException("Submission ran for too long")
 
 signal.signal(signal.SIGALRM, maxDurationHandler)
 
