@@ -101,9 +101,9 @@ aoc commands are:
             default=False,
         )
         parser.add_argument(
-            "--max-duration",
+            "--timeout",
             help="max duration per script in seconds (default to 1s)",
-            default=1,
+            default=0,
             type=int
         )
 
@@ -121,7 +121,7 @@ aoc commands are:
             args.restricted,
             args.expand,
             args.times,
-            args.max_duration,
+            args.timeout,
         )
 
     @staticmethod

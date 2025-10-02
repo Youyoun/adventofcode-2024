@@ -45,7 +45,7 @@ def run(
     restricted: bool,
     expand: bool,
     print_time_dist: bool,
-    max_duration: int,
+    timeout: int,
 ) -> None:
     problems = discovery.get_problems(days, parts, all_days_parts)
     printed_day_header: set[int] = set()
@@ -73,7 +73,9 @@ def run(
                 if restricted and input.author != submission.author.split(".")[0]:
                     continue
                 try:
-                    signal.alarm(max_duration) # Start timeout timer
+                    # Start timeout timer
+                    # if it's 0 (default, will be a no-op)
+                    signal.alarm(timeout)
                     result = run_submission(
                         problem, submission, input, previous, no_debug
                     )
@@ -84,7 +86,9 @@ def run(
                 except (DifferentAnswersException, UnexpectedDebugLinesException) as e:
                     errors.append(f"{BColor.RED}ERROR: {e}{BColor.ENDC}")
                 except TooLongException:
-                    errors.append(f"{BColor.RED}[{submission.author}] day-{submission.problem.day}/part-{submission.problem.part} ({submission.language}){BColor.ENDC}: Maximum of {max_duration}s reached (on input {BColor.BLUE}{input.author}{BColor.ENDC})")
+                    errors.append(f"{BColor.RED}[{submission.author}] day-{submission.problem.day}/part-{submission.problem.part} ({submission.language}){BColor.ENDC}: Maximum of {timeout}s reached (on input {BColor.BLUE}{input.author}{BColor.ENDC})")
+                finally:
+                    signal.alarm(0) # Stop the timer just in case
 
         for submission in submissions:
             if submission.runnable is not None:
